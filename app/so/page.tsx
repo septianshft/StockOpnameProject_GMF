@@ -177,12 +177,14 @@ export default function StockOpnamePage() {
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
             <p className="font-semibold text-slate-600 mb-4">Arahkan kamera ke QR Code Barang</p>
             <QRScanner onScanSuccess={handleScanSuccess} />
-            <button
-              onClick={() => setIsScanning(false)}
-              className="mt-6 w-full bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-3 px-4 rounded-lg"
-            >
-              Batal Scan
-            </button>
+            <div className="mt-4">
+              <button
+                onClick={() => setIsScanning(false)}
+                className="w-full bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-3 px-4 rounded-lg"
+              >
+                Batal Scan
+              </button>
+            </div>
           </div>
         )}
 
