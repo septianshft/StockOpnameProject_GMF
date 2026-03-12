@@ -12,29 +12,32 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const qrCodeRef = useRef<Html5Qrcode | null>(null);
   const containerId = "reader";
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Initialize the instance once
-    qrCodeRef.current = new Html5Qrcode(containerId);
+    // Initialize the instance once if it doesn't exist
+    if (!qrCodeRef.current) {
+      qrCodeRef.current = new Html5Qrcode(containerId);
+    }
 
     // Auto-start on mount
     startScanner();
 
     return () => {
       // Clean shutdown on unmount
-      if (qrCodeRef.current && qrCodeRef.current.isScanning) {
-        qrCodeRef.current
-          .stop()
-          .then(() => {
-            qrCodeRef.current?.clear();
-          })
-          .catch((err) => console.error("Failed to stop scanner on unmount", err));
+      if (qrCodeRef.current) {
+        if (qrCodeRef.current.isScanning) {
+          qrCodeRef.current.stop().catch((err) => console.error("Failed to stop scanner on unmount", err));
+        }
       }
     };
   }, []);
 
   const startScanner = async () => {
     if (!qrCodeRef.current) return;
+    
+    // Prevent double start
+    if (qrCodeRef.current.isScanning) return;
 
     try {
       setError(null);
@@ -46,14 +49,11 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
           aspectRatio: 1.0,
         },
         (decodedText) => {
-          // Success callback
           stopScanner().then(() => {
             onScanSuccess(decodedText);
           });
         },
-        () => {
-          // Scanning error callback (ignored to avoid spam)
-        }
+        () => {}
       );
       setIsStarted(true);
     } catch (err: any) {
@@ -74,6 +74,25 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !qrCodeRef.current) return;
+
+    try {
+      setError(null);
+      // Stop camera if it's running before scanning file
+      if (qrCodeRef.current.isScanning) {
+        await stopScanner();
+      }
+      
+      const decodedText = await qrCodeRef.current.scanFile(file, true);
+      onScanSuccess(decodedText);
+    } catch (err) {
+      console.error("File scan error:", err);
+      setError("Gagal membaca QR Code dari gambar. Pastikan gambar jelas.");
+    }
+  };
+
   return (
     <div className="w-full max-w-sm mx-auto bg-white rounded-lg overflow-hidden relative shadow-md p-2">
       {error && (
@@ -84,8 +103,8 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
 
       <div 
         id={containerId} 
-        className="w-full bg-black rounded-lg overflow-hidden"
-        style={{ minHeight: "250px" }}
+        className="w-full bg-black rounded-lg overflow-hidden flex items-center justify-center"
+        style={{ minHeight: "250px", aspectRatio: "1/1" }}
       ></div>
 
       <div className="mt-4 flex flex-col gap-2">
@@ -104,6 +123,22 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
             Matikan Kamera
           </button>
         )}
+        
+        <div className="relative mt-1">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+            ref={fileInputRef}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg transition active:scale-95 flex items-center justify-center gap-2"
+          >
+            <span>📁</span> Upload Gambar QR
+          </button>
+        </div>
       </div>
 
       <style jsx global>{`
@@ -112,6 +147,9 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
           height: 100% !important;
           object-fit: cover !important;
           border-radius: 0.5rem;
+        }
+        #${containerId} canvas {
+          display: none !important;
         }
       `}</style>
     </div>
