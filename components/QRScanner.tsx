@@ -20,6 +20,10 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
           fps: 10,
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0,
+          videoConstraints: {
+            aspectRatio: 1.0,
+            facingMode: "environment",
+          },
         },
         false
       );
@@ -30,11 +34,19 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
           if (scannerRef.current) {
              scannerRef.current.clear().then(() => {
                  onScanSuccess(text);
-             }).catch(console.error);
+             }).catch((err) => {
+                 console.error("Failed to clear scanner:", err);
+                 onScanSuccess(text); // Tetap lanjut meskipun clear gagal
+             });
           }
         },
         (error) => {
-          // Abaikan log error agar console tidak penuh
+          // Hanya tampilkan error fatal di UI, bukan scanning progress error
+          const errorContainer = document.getElementById("qr-error-container");
+          if (errorContainer && error?.toString().includes("NotFoundException") === false) {
+             errorContainer.textContent = "Kamera bermasalah. Pastikan izin kamera diberikan.";
+             errorContainer.classList.remove("hidden");
+          }
         }
       );
     }
@@ -42,7 +54,9 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
     // Cleanup saat komponen dibongkar (unmount)
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
+        scannerRef.current.clear().catch((err) => {
+          console.error("Cleanup error:", err);
+        });
         scannerRef.current = null;
       }
     };
@@ -50,6 +64,9 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
 
   return (
     <div className="w-full max-w-sm mx-auto bg-white rounded-lg overflow-hidden relative shadow-md p-2">
+      {/* Container for error message */}
+      <div id="qr-error-container" className="hidden p-2 mb-2 text-sm text-red-600 bg-red-50 rounded border border-red-200"></div>
+      
       <style>{`
         #reader {
           width: 100% !important;
@@ -57,7 +74,7 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
         }
         #reader video {
           width: 100% !important;
-          height: auto !important;
+          height: 100% !important;
           object-fit: cover !important;
           border-radius: 0.5rem; /* Tambah rounded corners biar rapi */
         }
