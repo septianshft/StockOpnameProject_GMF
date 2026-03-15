@@ -21,9 +21,10 @@ export default function AdminDashboard() {
   const [stokFisik, setStokFisik] = useState<number | "">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // State Tab 2 & 3: Data Master & History
+  // State Tab 2, 3, 4: Data Master, History, Requests
   const [inventoryList, setInventoryList] = useState<any[]>([]);
   const [historyList, setHistoryList] = useState<any[]>([]);
+  const [requestList, setRequestList] = useState<any[]>([]); // State baru untuk request
   const [isLoadingData, setIsLoadingData] = useState(false);
 
   // State Modal (Tambah & Edit)
@@ -54,6 +55,7 @@ export default function AdminDashboard() {
     if (isAuthenticated) {
       if (activeTab === "inventory") fetchInventory();
       if (activeTab === "history") fetchHistory();
+      if (activeTab === "requests") fetchRequests(); // Fetch data request saat tab aktif
     }
   }, [activeTab, isAuthenticated]);
 
@@ -69,6 +71,36 @@ export default function AdminDashboard() {
     const { data, error } = await supabase.from("transactions").select("*").order("created_at", { ascending: false });
     if (!error && data) setHistoryList(data);
     setIsLoadingData(false);
+  };
+
+  // === FUNGSI BARU: FETCH REQUEST ===
+  const fetchRequests = async () => {
+    setIsLoadingData(true);
+    const { data } = await supabase.from("item_requests").select("*").order("status", { ascending: true }).order("created_at", { ascending: false });
+    if (data) setRequestList(data);
+    setIsLoadingData(false);
+  };
+
+  const handleSelesaikanRequest = async (id: number, namaBarang: string) => {
+    const isConfirm = window.confirm(`Tandai request "${namaBarang}" sebagai SELESAI?`);
+    if (!isConfirm) return;
+    try {
+      const { error } = await supabase.from("item_requests").update({ status: 'SELESAI' }).eq("id", id);
+      if (error) throw error;
+      fetchRequests();
+    } catch (err) {
+      alert("Gagal mengupdate status request.");
+    }
+  };
+
+  const handleHapusRequest = async (id: number) => {
+    if (!window.confirm("Hapus log request ini dari database?")) return;
+    try {
+      await supabase.from("item_requests").delete().eq("id", id);
+      fetchRequests();
+    } catch (err) {
+      alert("Gagal menghapus request.");
+    }
   };
 
   // --- FUNGSI SCANNER (SO) ---
@@ -207,9 +239,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // ==========================================
-  // FITUR BARU: CETAK 1 QR
-  // ==========================================
+  // --- FUNGSI CETAK ---
   const handleCetakQR = (item: any) => {
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(item.barcode_id)}`;
     const printWindow = window.open('', '_blank', 'width=500,height=600');
@@ -249,15 +279,11 @@ export default function AdminDashboard() {
     }
   };
 
-  // ==========================================
-  // FITUR BARU: CETAK SEMUA QR (MASS PRINT)
-  // ==========================================
   const handleCetakSemuaQR = () => {
     if (inventoryList.length === 0) return alert("Belum ada barang di database!");
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      // Bikin HTML Grid untuk seluruh barang
       let itemsHtml = inventoryList.map(item => `
         <div class="label-box">
           <h2>${item.part_name}</h2>
@@ -273,33 +299,18 @@ export default function AdminDashboard() {
             <title>Cetak Semua QR Code</title>
             <style>
               body { font-family: sans-serif; padding: 20px; background-color: #f1f5f9; }
-              /* Aturan Grid untuk nampilin berjejer */
-              .grid-container { 
-                display: grid; 
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
-                gap: 15px; 
-              }
-              .label-box { 
-                background: white; 
-                border: 2px solid #000; 
-                padding: 15px; 
-                text-align: center; 
-                border-radius: 8px; 
-                page-break-inside: avoid; /* Biar stiker ga kepotong di halaman beda pas di print */
-              }
+              .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+              .label-box { background: white; border: 2px solid #000; padding: 15px; text-align: center; border-radius: 8px; page-break-inside: avoid; }
               h2 { margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
               p { margin: 0 0 10px 0; font-size: 12px; color: #333; font-weight: bold; }
               img { width: 130px; height: 130px; margin: 0 auto; display: block; }
               .uuid { margin-top: 10px; font-family: monospace; font-size: 9px; color: #555; word-break: break-all; }
-              
-              /* Header area sebelum ngeprint */
               .header { text-align: center; margin-bottom: 20px; }
               .print-btn { padding: 12px 24px; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37,99,235,0.3); }
-              
               @media print {
                 body { background: white; padding: 0; margin: 0; }
                 .header, .no-print { display: none !important; }
-                .label-box { border: 1px dashed #999; border-radius: 0; margin: 0; } /* Garis putus-putus biar gampang digunting */
+                .label-box { border: 1px dashed #999; border-radius: 0; margin: 0; }
                 .grid-container { gap: 5px; }
               }
             </style>
@@ -340,7 +351,7 @@ export default function AdminDashboard() {
               maxLength={6}
               autoFocus
             />
-            <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-lg">Masuk</button>
+            <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-lg transition-all active:scale-95">Masuk</button>
           </form>
           <a href="/" className="block mt-6 text-sm text-slate-500 hover:text-slate-800 underline">Kembali ke Peminjaman Karyawan</a>
         </div>
@@ -348,73 +359,182 @@ export default function AdminDashboard() {
     );
   }
 
-  // ==========================================
-  // TAMPILAN 2: DASHBOARD ADMIN
-  // ==========================================
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-black pb-10">
-      <div className="bg-slate-800 text-white p-4 shadow-md sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold">Admin Inventory</h1>
-            <p className="text-xs text-slate-300">Sistem Manajemen & SO</p>
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-12">
+      {/* HEADER */}
+      <header className="bg-slate-900 text-white shadow-lg sticky top-0 z-20 border-b border-slate-700">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-inner">
+              <span className="text-xl">🛠️</span>
+            </div>
+            <div>
+              <h1 className="text-lg font-extrabold tracking-tight">GMF Inventory</h1>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold">Admin Central Control</p>
+            </div>
           </div>
-          <button onClick={() => setIsAuthenticated(false)} className="bg-slate-700 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition">
-            Keluar
+          <button 
+            onClick={() => setIsAuthenticated(false)} 
+            className="group flex items-center gap-2 bg-slate-800 hover:bg-red-600/90 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 shadow-sm"
+          >
+            <span>Keluar</span>
+            <span className="group-hover:translate-x-1 transition-transform">→</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-4xl mx-auto px-4 mt-6">
-        <div className="flex bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-          <button onClick={() => setActiveTab("scanner")} className={`flex-1 py-3 text-sm font-semibold transition ${activeTab === "scanner" ? "bg-amber-100 text-amber-700 border-b-2 border-amber-500" : "text-slate-600 hover:bg-slate-50"}`}>
-            🔍 Audit (SO)
+      {/* NAVIGATION TABS */}
+      <nav className="max-w-5xl mx-auto px-6 mt-8 overflow-x-auto">
+        <div className="flex p-1.5 bg-slate-200/50 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-inner min-w-max">
+          <button 
+            onClick={() => setActiveTab("scanner")} 
+            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+              activeTab === "scanner" 
+                ? "bg-blue-600 text-white shadow-md ring-1 ring-blue-300" 
+                : "bg-white text-slate-500 hover:text-slate-700 hover:bg-white/50"
+            }`}
+          >
+            <span className={activeTab === "scanner" ? "text-amber-300" : ""}>🔍</span>
+            Audit (SO)
           </button>
-          <button onClick={() => setActiveTab("inventory")} className={`flex-1 py-3 text-sm font-semibold transition ${activeTab === "inventory" ? "bg-blue-100 text-blue-700 border-b-2 border-blue-500" : "text-slate-600 hover:bg-slate-50"}`}>
-            📦 Master Stok
+          <button 
+            onClick={() => setActiveTab("inventory")} 
+            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+              activeTab === "inventory" 
+                ? "bg-blue-600 text-white shadow-md ring-1 ring-blue-300" 
+                : "bg-white text-slate-500 hover:text-slate-700 hover:bg-white/50"
+            }`}
+          >
+            <span className={activeTab === "inventory" ? "text-blue-300" : ""}>📦</span>
+            Master Stok
           </button>
-          <button onClick={() => setActiveTab("history")} className={`flex-1 py-3 text-sm font-semibold transition ${activeTab === "history" ? "bg-green-100 text-green-700 border-b-2 border-green-500" : "text-slate-600 hover:bg-slate-50"}`}>
-            📜 Riwayat
+          <button 
+            onClick={() => setActiveTab("history")} 
+            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+              activeTab === "history" 
+                ? "bg-blue-600 text-white shadow-md ring-1 ring-blue-300" 
+                : "bg-white text-slate-500 hover:text-slate-700 hover:bg-white/50"
+            }`}
+          >
+            <span className={activeTab === "history" ? "text-green-300" : ""}>📜</span>
+            Riwayat
+          </button>
+
+          {/* TAB BARU: REQUEST BARANG */}
+          <button 
+            onClick={() => setActiveTab("requests")} 
+            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+              activeTab === "requests" 
+                ? "bg-blue-600 text-white shadow-md ring-1 ring-blue-300" 
+                : "bg-white text-slate-500 hover:text-slate-700 hover:bg-white/50"
+            }`}
+          >
+            <span className={activeTab === "requests" ? "text-purple-300" : ""}>📥</span>
+            Request
           </button>
         </div>
-      </div>
+      </nav>
 
-      <div className="max-w-4xl mx-auto px-4 mt-6">
+      <main className="max-w-5xl mx-auto px-6 mt-8">
         
         {/* TAB 1: SCANNER SO */}
         {activeTab === "scanner" && (
-          <div className="w-full max-w-md mx-auto">
+          <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             {!isScanning && !isLoadingScan && !itemData && !errorMsg && (
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-center">
-                <button onClick={() => setIsScanning(true)} className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 px-6 rounded-lg shadow-md text-lg">
-                  📷 SCAN UNTUK AUDIT
+              <div className="bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 text-center group">
+                <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-4xl">📷</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">Mulai Stock Opname</h3>
+                <p className="text-slate-500 text-sm mb-8">Arahkan kamera ke QR Code untuk melakukan audit fisik barang.</p>
+                <button 
+                  onClick={() => setIsScanning(true)} 
+                  className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95"
+                >
+                  AKTIFKAN KAMERA
                 </button>
               </div>
             )}
             {isScanning && (
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
+              <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200 text-center animate-in zoom-in-95 duration-300">
+                <div className="mb-4 flex items-center justify-center gap-2 text-slate-500 font-medium">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
+                  Scanning in progress...
+                </div>
                 <QRScanner onScanSuccess={handleScanSuccess} />
-                <button onClick={() => setIsScanning(false)} className="mt-4 w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-2 rounded-lg">Batal</button>
+                <button 
+                  onClick={() => setIsScanning(false)} 
+                  className="mt-6 w-full bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 font-bold py-3 rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
               </div>
             )}
-            {isLoadingScan && <p className="text-center py-10">Mencari data...</p>}
+            {isLoadingScan && (
+              <div className="bg-white p-20 rounded-3xl shadow-xl border border-slate-200 text-center">
+                <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-slate-500 font-bold">Mencari data barang...</p>
+              </div>
+            )}
             {errorMsg && !isLoadingScan && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-red-200 text-center text-red-600 font-bold">
-                {errorMsg} <br/><button onClick={resetScanTampilan} className="mt-4 text-blue-600 underline text-sm">Kembali</button>
+              <div className="bg-white p-10 rounded-3xl shadow-xl border border-red-100 text-center animate-in shake duration-500">
+                <div className="text-5xl mb-4">⚠️</div>
+                <h3 className="text-lg font-bold text-red-600 mb-2">Terjadi Masalah</h3>
+                <p className="text-slate-500 text-sm mb-6">{errorMsg}</p>
+                <button 
+                  onClick={resetScanTampilan} 
+                  className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors"
+                >
+                  Coba Lagi
+                </button>
               </div>
             )}
             {itemData && !isLoadingScan && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-slate-800 p-5 text-white">
-                  <h2 className="text-xl font-bold">{itemData.part_name}</h2>
-                  <p className="text-sm text-slate-300 mt-1">Sistem: <span className="text-amber-400 font-bold text-lg">{itemData.quantity}</span> unit</p>
+              <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200 border border-slate-200 overflow-hidden animate-in slide-in-from-top-4 duration-500">
+                <div className="bg-slate-900 p-8 text-white relative">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                  <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest mb-3">Audit Item</span>
+                  <h2 className="text-2xl font-black">{itemData.part_name}</h2>
+                  <div className="mt-6 flex items-end justify-between">
+                    <div>
+                      <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Stok Sistem</p>
+                      <p className="text-3xl font-black text-amber-400">{itemData.quantity} <span className="text-sm font-medium text-slate-400 uppercase tracking-normal">unit</span></p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Lokasi</p>
+                      <p className="text-lg font-bold text-slate-200">{itemData.location || "N/A"}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-5 bg-amber-50">
-                  <label className="block text-sm font-bold text-slate-800 mb-2">Stok Fisik Aktual:</label>
-                  <input type="number" value={stokFisik} onChange={(e) => setStokFisik(e.target.value ? Number(e.target.value) : "")} className="w-full border-2 border-amber-300 rounded-md p-3 text-lg font-bold text-center" placeholder="Ketik angka..." autoFocus />
-                  <div className="flex gap-3 mt-4">
-                    <button onClick={resetScanTampilan} className="flex-1 bg-white border border-slate-300 py-2 rounded-lg font-semibold">Batal</button>
-                    <button onClick={handleUpdateStok} disabled={isSubmitting} className="flex-1 bg-amber-500 text-white py-2 rounded-lg font-bold">Sesuaikan</button>
+                <div className="p-8 bg-slate-50/50">
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Input Stok Fisik Aktual</label>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      value={stokFisik} 
+                      onChange={(e) => setStokFisik(e.target.value ? Number(e.target.value) : "")} 
+                      className="w-full bg-white border-2 border-slate-200 focus:border-blue-500 rounded-2xl p-6 text-3xl font-black text-center text-slate-900 transition-all outline-none shadow-sm" 
+                      placeholder="0" 
+                      autoFocus 
+                    />
+                  </div>
+                  <div className="flex gap-4 mt-8">
+                    <button 
+                      onClick={resetScanTampilan} 
+                      className="flex-1 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 py-4 rounded-2xl font-bold transition-all"
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      onClick={handleUpdateStok} 
+                      disabled={isSubmitting} 
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-200 transition-all active:scale-95"
+                    >
+                      {isSubmitting ? "Updating..." : "SESUAIKAN"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -424,51 +544,90 @@ export default function AdminDashboard() {
 
         {/* TAB 2: MASTER STOK */}
         {activeTab === "inventory" && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
-            <div className="p-4 border-b flex justify-between items-center bg-slate-50">
-              <h2 className="font-bold text-slate-800">Daftar Barang</h2>
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden animate-in fade-in duration-500">
+            <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/30">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Daftar Barang</h2>
+                <p className="text-sm text-slate-500 font-medium">Manajemen data master dan pencetakan QR Code.</p>
+              </div>
               
-              {/* TOMBOL CETAK SEMUA DITAMBAHKAN DI SINI 👇 */}
-              <div className="flex gap-2">
-                <button onClick={handleCetakSemuaQR} className="bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold py-2 px-3 rounded-lg shadow-sm">
-                  🖨️ Cetak Semua
+              <div className="flex gap-3 w-full sm:w-auto">
+                <button 
+                  onClick={handleCetakSemuaQR} 
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-sm font-bold py-3 px-5 rounded-xl transition-all shadow-sm"
+                >
+                  <span>🖨️</span> Cetak Semua
                 </button>
-                <button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-3 rounded-lg shadow-sm">
-                  + Tambah Barang
+                <button 
+                  onClick={openAddModal} 
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-3 px-5 rounded-xl transition-all shadow-lg shadow-blue-200"
+                >
+                  <span>+</span> Tambah Barang
                 </button>
               </div>
-
             </div>
+
             <div className="overflow-x-auto">
               {isLoadingData ? (
-                <p className="text-center py-10 text-slate-500">Memuat data...</p>
+                <div className="py-20 text-center">
+                  <div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full mx-auto mb-4"></div>
+                  <p className="text-slate-400 font-medium">Memuat database...</p>
+                </div>
               ) : (
-                <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-slate-100 text-slate-600">
-                    <tr>
-                      <th className="p-4 font-semibold">Nama Barang</th>
-                      <th className="p-4 font-semibold">Part Number</th>
-                      <th className="p-4 font-semibold text-center">Stok</th>
-                      <th className="p-4 font-semibold text-center">Aksi</th>
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-8 py-5 border-b border-slate-100">Info Barang</th>
+                      <th className="px-8 py-5 border-b border-slate-100">Part Number</th>
+                      <th className="px-8 py-5 border-b border-slate-100 text-center">Lokasi</th>
+                      <th className="px-8 py-5 border-b border-slate-100 text-center">Stok</th>
+                      <th className="px-8 py-5 border-b border-slate-100 text-right">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-50">
                     {inventoryList.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50">
-                        <td className="p-4 font-medium text-slate-800">{item.part_name}</td>
-                        <td className="p-4 text-slate-500">{item.part_number}</td>
-                        <td className="p-4 text-center">
-                          <span className="bg-blue-100 text-blue-800 py-1 px-3 rounded-full font-bold">{item.quantity}</span>
+                      <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                        <td className="px-8 py-6">
+                          <p className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">{item.part_name}</p>
+                          <p className="text-[10px] font-mono text-slate-400 mt-1 truncate max-w-[150px]">{item.barcode_id}</p>
                         </td>
-                        <td className="p-4 text-center">
-                          <button onClick={() => handleCetakQR(item)} className="text-blue-600 hover:underline mr-4 font-bold">🖨️ Cetak 1</button>
-                          <button onClick={() => openEditModal(item)} className="text-amber-500 hover:underline mr-4 font-semibold">Edit</button>
-                          <button onClick={() => handleHapusBarang(item.id, item.part_name)} className="text-red-500 hover:underline font-semibold">Hapus</button>
+                        <td className="px-8 py-6 text-sm font-bold text-slate-500">
+                          {item.part_number || "—"}
+                        </td>
+                        <td className="px-8 py-6 text-center">
+                          <span className="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">
+                            {item.location || "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-center">
+                          <span className={`inline-block min-w-[3rem] py-1 px-3 rounded-full font-black text-sm ${
+                            Number(item.quantity) <= 5 ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-700"
+                          }`}>
+                            {item.quantity}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex justify-end items-center gap-4">
+                            <button onClick={() => handleCetakQR(item)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Cetak QR">
+                              🖨️
+                            </button>
+                            <button onClick={() => openEditModal(item)} className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all" title="Edit">
+                              ✏️
+                            </button>
+                            <button onClick={() => handleHapusBarang(item.id, item.part_name)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Hapus">
+                              🗑️
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
                     {inventoryList.length === 0 && (
-                      <tr><td colSpan={4} className="p-8 text-center text-slate-500">Belum ada barang di database.</td></tr>
+                      <tr>
+                        <td colSpan={5} className="px-8 py-20 text-center">
+                          <div className="text-4xl mb-4">📦</div>
+                          <p className="text-slate-400 font-bold">Belum ada data barang.</p>
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>
@@ -479,44 +638,79 @@ export default function AdminDashboard() {
 
         {/* TAB 3: RIWAYAT TRANSAKSI */}
         {activeTab === "history" && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-4 border-b bg-slate-50">
-              <h2 className="font-bold text-slate-800">Log Aktivitas Terbaru</h2>
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden animate-in fade-in duration-500">
+            <div className="p-8 border-b border-slate-100 bg-slate-50/30">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Log Aktivitas</h2>
+              <p className="text-sm text-slate-500 font-medium">Pantau pergerakan stok dan penyesuaian audit.</p>
             </div>
+            
             <div className="overflow-x-auto">
               {isLoadingData ? (
-                <p className="text-center py-10 text-slate-500">Memuat data...</p>
+                <div className="py-20 text-center">
+                  <div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-green-600 rounded-full mx-auto mb-4"></div>
+                  <p className="text-slate-400 font-medium">Memuat histori...</p>
+                </div>
               ) : (
-                <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-slate-100 text-slate-600">
-                    <tr>
-                      <th className="p-4 font-semibold">Waktu</th>
-                      <th className="p-4 font-semibold">Peminjam / User</th>
-                      <th className="p-4 font-semibold">Barang</th>
-                      <th className="p-4 font-semibold text-center">Jumlah</th>
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-8 py-5 border-b border-slate-100">Waktu & Tanggal</th>
+                      <th className="px-8 py-5 border-b border-slate-100">User / Peminjam</th>
+                      <th className="px-8 py-5 border-b border-slate-100">Detail Item</th>
+                      <th className="px-8 py-5 border-b border-slate-100 text-right">Perubahan</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-50">
                     {historyList.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-50">
-                        <td className="p-4 text-slate-500">
-                          {new Date(log.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
+                      <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-8 py-6">
+                          <p className="text-sm font-bold text-slate-700">
+                            {new Date(log.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">
+                            {new Date(log.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
                         </td>
-                        <td className="p-4 font-semibold text-slate-800">
+                        <td className="px-8 py-6">
                           {log.nama_peminjam === "ADMIN (SO)" ? (
-                            <span className="text-amber-600 bg-amber-100 px-2 py-1 rounded text-xs">ADMIN (SO)</span>
-                          ) : log.nama_peminjam}
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-amber-100">
+                              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                              Audit Admin
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase">
+                                {log.nama_peminjam?.charAt(0) || "?"}
+                              </div>
+                              <p className="text-sm font-extrabold text-slate-900">{log.nama_peminjam}</p>
+                            </div>
+                          )}
                         </td>
-                        <td className="p-4 text-slate-600">{log.part_name}</td>
-                        <td className="p-4 text-center font-bold">
-                          <span className={log.jumlah < 0 ? "text-red-600" : "text-green-600"}>
-                            {log.jumlah > 0 ? `+${log.jumlah}` : log.jumlah}
-                          </span>
+                        <td className="px-8 py-6">
+                          <p className="text-sm font-bold text-slate-800">{log.part_name}</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{log.part_number || "No Part Number"}</p>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className={`inline-flex items-center justify-end font-black text-sm ${
+                            log.jumlah < 0 ? "text-red-600" : "text-green-600"
+                          }`}>
+                            {log.jumlah > 0 ? (
+                              <span className="mr-1">▲</span>
+                            ) : (
+                              <span className="mr-1">▼</span>
+                            )}
+                            {Math.abs(log.jumlah)}
+                          </div>
                         </td>
                       </tr>
                     ))}
                     {historyList.length === 0 && (
-                      <tr><td colSpan={4} className="p-8 text-center text-slate-500">Belum ada riwayat transaksi.</td></tr>
+                      <tr>
+                        <td colSpan={4} className="px-8 py-20 text-center">
+                          <div className="text-4xl mb-4">📜</div>
+                          <p className="text-slate-400 font-bold">Belum ada riwayat aktivitas.</p>
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>
@@ -525,55 +719,204 @@ export default function AdminDashboard() {
           </div>
         )}
 
-      </div>
+        {/* TAB 4: REQUEST BARANG (FITUR BARU) */}
+        {activeTab === "requests" && (
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden animate-in fade-in duration-500">
+            <div className="p-8 border-b border-slate-100 bg-slate-50/30">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Antrean Request</h2>
+              <p className="text-sm text-slate-500 font-medium">Kelola pengajuan stok barang dari karyawan.</p>
+            </div>
+            
+            <div className="overflow-x-auto">
+              {isLoadingData ? (
+                <div className="py-20 text-center">
+                  <div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-purple-600 rounded-full mx-auto mb-4"></div>
+                  <p className="text-slate-400 font-medium">Memuat data request...</p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-8 py-5 border-b border-slate-100">Tanggal</th>
+                      <th className="px-8 py-5 border-b border-slate-100">Info Request</th>
+                      <th className="px-8 py-5 border-b border-slate-100">Keterangan</th>
+                      <th className="px-8 py-5 border-b border-slate-100 text-center">Status</th>
+                      <th className="px-8 py-5 border-b border-slate-100 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {requestList.map((req) => (
+                      <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-8 py-6">
+                          <p className="text-sm font-bold text-slate-700">
+                            {new Date(req.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">
+                            {new Date(req.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </td>
+                        <td className="px-8 py-6">
+                          <p className="text-sm font-extrabold text-slate-900">{req.nama_barang}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="bg-slate-100 text-slate-600 py-0.5 px-2 rounded-md text-[10px] font-black">{req.jumlah} unit</span>
+                            <span className="text-xs text-slate-500 font-medium">oleh {req.nama_peminjam}</span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <p className="text-xs text-slate-600 italic max-w-xs">{req.keterangan || "-"}</p>
+                        </td>
+                        <td className="px-8 py-6 text-center">
+                          {req.status === "PENDING" ? (
+                            <span className="inline-block px-3 py-1 bg-amber-50 border border-amber-200 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-wider animate-pulse">
+                              ⏳ PENDING
+                            </span>
+                          ) : (
+                            <span className="inline-block px-3 py-1 bg-green-50 border border-green-200 text-green-600 rounded-full text-[10px] font-black uppercase tracking-wider">
+                              ✅ SELESAI
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex justify-end items-center gap-3">
+                            {req.status === "PENDING" && (
+                              <button 
+                                onClick={() => handleSelesaikanRequest(req.id, req.nama_barang)} 
+                                className="p-2 bg-green-50 hover:bg-green-100 text-green-600 hover:text-green-700 rounded-lg transition-all text-xs font-bold"
+                                title="Tandai Selesai"
+                              >
+                                ✓ Selesaikan
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => handleHapusRequest(req.id)} 
+                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" 
+                              title="Hapus Log"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {requestList.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-8 py-20 text-center">
+                          <div className="text-4xl mb-4">📥</div>
+                          <p className="text-slate-400 font-bold">Yeay! Tidak ada antrean request.</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+      </main>
 
       {/* MODAL: TAMBAH / EDIT BARANG (POPUP) */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b bg-slate-800 text-white flex justify-between items-center">
-              <h2 className="font-bold text-lg">{editId ? "Edit Data Barang" : "Tambah Barang Baru"}</h2>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white font-bold text-xl leading-none">×</button>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300 border border-white/20">
+            <div className="p-8 border-b border-slate-100 bg-slate-900 text-white flex justify-between items-center">
+              <div>
+                <h2 className="font-black text-xl tracking-tight">{editId ? "Update Barang" : "Barang Baru"}</h2>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">{editId ? "Lakukan perubahan pada data master." : "Lengkapi form untuk menambah data."}</p>
+              </div>
+              <button 
+                onClick={() => setShowAddModal(false)} 
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors text-2xl"
+              >
+                ×
+              </button>
             </div>
             
-            <div className="p-6 overflow-y-auto">
-              <form onSubmit={handleSimpanBarang}>
-                <div className="mb-4">
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Nama Barang *</label>
-                  <input type="text" required value={formData.part_name} onChange={(e) => setFormData({...formData, part_name: e.target.value})} className="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Contoh: Krytox Grease" />
+            <div className="p-8 overflow-y-auto">
+              <form onSubmit={handleSimpanBarang} className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Nama Barang *</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={formData.part_name} 
+                    onChange={(e) => setFormData({...formData, part_name: e.target.value})} 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+                    placeholder="Contoh: Krytox Grease" 
+                  />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Part Number</label>
-                    <input type="text" value={formData.part_number} onChange={(e) => setFormData({...formData, part_number: e.target.value})} className="w-full border border-slate-300 rounded p-2" placeholder="Opsional..." />
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Part Number</label>
+                    <input 
+                      type="text" 
+                      value={formData.part_number} 
+                      onChange={(e) => setFormData({...formData, part_number: e.target.value})} 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+                      placeholder="Opsional" 
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">{editId ? "Stok Aktual *" : "Stok Awal *"}</label>
-                    <input type="number" required min="0" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: e.target.value})} className="w-full border border-slate-300 rounded p-2" placeholder="0" />
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{editId ? "Stok Aktual *" : "Stok Awal *"}</label>
+                    <input 
+                      type="number" 
+                      required 
+                      min="0" 
+                      value={formData.quantity} 
+                      onChange={(e) => setFormData({...formData, quantity: e.target.value})} 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+                      placeholder="0" 
+                    />
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Lokasi Rak / Drawer</label>
-                  <input type="text" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full border border-slate-300 rounded p-2" placeholder="Contoh: DRAWER A" />
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Lokasi Rak / Drawer</label>
+                  <input 
+                    type="text" 
+                    value={formData.location} 
+                    onChange={(e) => setFormData({...formData, location: e.target.value})} 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+                    placeholder="Contoh: DRAWER A" 
+                  />
                 </div>
 
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Barcode ID / UUID *</label>
-                  <p className="text-xs text-slate-500 mb-2">Kode unik yang tertempel pada fisik barang.</p>
+                <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
+                  <label className="block text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">Barcode ID / UUID *</label>
                   <div className="flex gap-2">
-                    <input type="text" required value={formData.barcode_id} onChange={(e) => setFormData({...formData, barcode_id: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm font-mono" placeholder="Masukkan / Generate kode..." />
-                    <button type="button" onClick={handleGenerateUUID} className="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded text-sm font-bold shrink-0">
-                      Generate
+                    <input 
+                      type="text" 
+                      required 
+                      value={formData.barcode_id} 
+                      onChange={(e) => setFormData({...formData, barcode_id: e.target.value})} 
+                      className="flex-1 bg-white border border-blue-200 rounded-xl p-3 text-xs font-mono font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none" 
+                      placeholder="ID Unik..." 
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleGenerateUUID} 
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md shadow-blue-200 shrink-0 active:scale-95"
+                    >
+                      Gen
                     </button>
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2 border-t mt-2">
-                  <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded">Batal</button>
-                  <button type="submit" disabled={isSavingItem} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 flex justify-center items-center">
-                    {isSavingItem ? "Menyimpan..." : (editId ? "Update Barang" : "Simpan Barang")}
+                <div className="flex gap-4 pt-4">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAddModal(false)} 
+                    className="flex-1 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-bold py-4 rounded-2xl transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isSavingItem} 
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 disabled:opacity-50 transition-all active:scale-95"
+                  >
+                    {isSavingItem ? "Saving..." : (editId ? "UPDATE" : "SIMPAN")}
                   </button>
                 </div>
               </form>
