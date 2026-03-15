@@ -23,6 +23,7 @@ export default function AdminDashboard() {
 
   // State Tab 2, 3, 4: Data Master, History, Requests
   const [inventoryList, setInventoryList] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState(""); // State baru untuk pencarian
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [requestList, setRequestList] = useState<any[]>([]); // State baru untuk request
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -331,6 +332,12 @@ export default function AdminDashboard() {
     }
   };
 
+  // Filter list inventory berdasarkan pencarian (Nama atau PN)
+  const filteredInventory = inventoryList.filter(item => 
+    item.part_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.part_number?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   // ==========================================
   // TAMPILAN 1: GERBANG PIN
   // ==========================================
@@ -545,13 +552,27 @@ export default function AdminDashboard() {
         {/* TAB 2: MASTER STOK */}
         {activeTab === "inventory" && (
           <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden animate-in fade-in duration-500">
-            <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/30">
-              <div>
+            <div className="p-8 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-slate-50/30">
+              <div className="flex-1">
                 <h2 className="text-2xl font-black text-slate-900 tracking-tight">Daftar Barang</h2>
                 <p className="text-sm text-slate-500 font-medium">Manajemen data master dan pencetakan QR Code.</p>
               </div>
+
+              {/* BAR PENCARIAN BARU */}
+              <div className="relative w-full lg:max-w-xs group">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                  🔍
+                </span>
+                <input 
+                  type="text" 
+                  placeholder="Cari Nama atau PN..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
+                />
+              </div>
               
-              <div className="flex gap-3 w-full sm:w-auto">
+              <div className="flex gap-3 w-full sm:w-auto shrink-0">
                 <button 
                   onClick={handleCetakSemuaQR} 
                   className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-sm font-bold py-3 px-5 rounded-xl transition-all shadow-sm"
@@ -585,7 +606,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {inventoryList.map((item) => (
+                    {filteredInventory.map((item) => (
                       <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
                         <td className="px-8 py-6">
                           <p className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">{item.part_name}</p>
@@ -621,11 +642,11 @@ export default function AdminDashboard() {
                         </td>
                       </tr>
                     ))}
-                    {inventoryList.length === 0 && (
+                    {filteredInventory.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-8 py-20 text-center">
-                          <div className="text-4xl mb-4">📦</div>
-                          <p className="text-slate-400 font-bold">Belum ada data barang.</p>
+                          <div className="text-4xl mb-4">�</div>
+                          <p className="text-slate-400 font-bold">Barang tidak ditemukan.</p>
                         </td>
                       </tr>
                     )}
