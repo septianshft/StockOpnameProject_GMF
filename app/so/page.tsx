@@ -242,37 +242,69 @@ export default function AdminDashboard() {
 
   // --- FUNGSI CETAK ---
   const handleCetakQR = (item: any) => {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(item.barcode_id)}`;
-    const printWindow = window.open('', '_blank', 'width=500,height=600');
+    const printWindow = window.open('', '_blank');
     if (printWindow) {
+      
+      let itemsHtml = "";
+      // Ambil quantity, minimal 1 (jaga-jaga kalau stok 0 tapi admin butuh cetak 1 stiker buat nempel di rak kosong)
+      const qty = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.barcode_id)}`;
+
+      // Looping pembuatan kotak stiker sebanyak jumlah stok
+      for (let i = 0; i < qty; i++) {
+        itemsHtml += `
+          <div class="label-box">
+            <h2>${item.part_name}</h2>
+            <p>PN: ${item.part_number || "-"}</p>
+            <img src="${qrUrl}" alt="QR Code" />
+            <div class="uuid">${item.barcode_id}</div>
+          </div>
+        `;
+      }
+
       printWindow.document.write(`
         <html>
           <head>
             <title>Cetak QR - ${item.part_name}</title>
             <style>
-              body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f1f5f9; }
-              .label-box { background: white; border: 2px solid #000; padding: 20px; text-align: center; width: 260px; border-radius: 8px; }
-              h2 { margin: 0 0 5px 0; font-size: 20px; text-transform: uppercase; }
-              p { margin: 0 0 15px 0; font-size: 14px; color: #333; font-weight: bold; }
-              img { width: 180px; height: 180px; margin: 0 auto; display: block; }
-              .uuid { margin-top: 15px; font-family: monospace; font-size: 11px; color: #555; word-break: break-all; }
+              body { font-family: sans-serif; padding: 20px; background-color: #f1f5f9; }
+              /* Gunakan layout GRID/FLEX persis seperti fitur cetak semua */
+              .grid-container { 
+                display: flex; 
+                flex-wrap: wrap; /* Otomatis turun ke bawah kalau 1 baris penuh */
+                gap: 10px; 
+                justify-content: flex-start;
+              }
+              .label-box { 
+                background: white; border: 2px solid #000; padding: 10px; 
+                text-align: center; border-radius: 8px; page-break-inside: avoid;
+                width: 160px; /* Ukuran kotak dikunci */
+              }
+              h2 { margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+              p { margin: 0 0 10px 0; font-size: 10px; color: #333; font-weight: bold; }
+              img { width: 100px; height: 100px; margin: 0 auto; display: block; }
+              .uuid { margin-top: 10px; font-family: monospace; font-size: 8px; color: #555; word-break: break-all; }
+              .header { text-align: center; margin-bottom: 20px; }
+              .print-btn { padding: 12px 24px; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37,99,235,0.3); }
+              
+              /* CSS Khusus Print agar hemat kertas */
               @media print {
-                body { background: white; height: auto; display: block; padding: 0; margin: 0; }
-                .label-box { border: 1px solid #000; border-radius: 0; margin: 0; }
-                .no-print { display: none !important; }
+                @page { margin: 5mm; }
+                body { background: white; padding: 0; margin: 0; }
+                .header, .no-print { display: none !important; }
+                .label-box { border: 1px dashed #999; border-radius: 0; }
               }
             </style>
           </head>
           <body>
-            <div class="label-box">
-              <h2>${item.part_name}</h2>
-              <p>PN: ${item.part_number || "-"}</p>
-              <img src="${qrUrl}" alt="QR Code" />
-              <div class="uuid">${item.barcode_id}</div>
+            <div class="header no-print">
+              <h1>Cetak ${qty} Stiker untuk ${item.part_name}</h1>
+              <p>Pastikan gambar QR Code sudah termuat sebelum klik tombol cetak di bawah.</p>
+              <button class="print-btn" onclick="window.print()">🖨️ Cetak Stiker Sekarang</button>
             </div>
-            <button class="no-print" onclick="window.print()" style="margin-top: 30px; padding: 12px 24px; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
-              🖨️ Cetak Stiker Sekarang
-            </button>
+            <div class="grid-container">
+              ${itemsHtml}
+            </div>
           </body>
         </html>
       `);
@@ -285,14 +317,26 @@ export default function AdminDashboard() {
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      let itemsHtml = inventoryList.map(item => `
-        <div class="label-box">
-          <h2>${item.part_name}</h2>
-          <p>PN: ${item.part_number || "-"}</p>
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.barcode_id)}" alt="QR Code" />
-          <div class="uuid">${item.barcode_id}</div>
-        </div>
-      `).join('');
+      
+      // PERBAIKAN LOGIKA LOOPING BERDASARKAN QTY BARANG
+      let itemsHtml = "";
+      let totalStikerDicetak = 0;
+
+      inventoryList.forEach(item => {
+        const qty = Number(item.quantity) || 0;
+        // Ulangi pembuatan HTML box sebanyak jumlah stok barang tersebut
+        for (let i = 0; i < qty; i++) {
+          totalStikerDicetak++;
+          itemsHtml += `
+            <div class="label-box">
+              <h2>${item.part_name}</h2>
+              <p>PN: ${item.part_number || "-"}</p>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.barcode_id)}" alt="QR Code" />
+              <div class="uuid">${item.barcode_id}</div>
+            </div>
+          `;
+        }
+      });
 
       printWindow.document.write(`
         <html>
@@ -300,25 +344,35 @@ export default function AdminDashboard() {
             <title>Cetak Semua QR Code</title>
             <style>
               body { font-family: sans-serif; padding: 20px; background-color: #f1f5f9; }
-              .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
-              .label-box { background: white; border: 2px solid #000; padding: 15px; text-align: center; border-radius: 8px; page-break-inside: avoid; }
-              h2 { margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-              p { margin: 0 0 10px 0; font-size: 12px; color: #333; font-weight: bold; }
-              img { width: 130px; height: 130px; margin: 0 auto; display: block; }
-              .uuid { margin-top: 10px; font-family: monospace; font-size: 9px; color: #555; word-break: break-all; }
+              .grid-container { 
+                display: flex; 
+                flex-wrap: wrap; /* Supaya turun ke bawah kalau penuh */
+                gap: 10px; 
+              }
+              .label-box { 
+                background: white; border: 2px solid #000; padding: 10px; 
+                text-align: center; border-radius: 8px; page-break-inside: avoid;
+                width: 160px; /* Ukuran statis biar seragam */
+              }
+              h2 { margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+              p { margin: 0 0 10px 0; font-size: 10px; color: #333; font-weight: bold; }
+              img { width: 100px; height: 100px; margin: 0 auto; display: block; }
+              .uuid { margin-top: 10px; font-family: monospace; font-size: 8px; color: #555; word-break: break-all; }
               .header { text-align: center; margin-bottom: 20px; }
               .print-btn { padding: 12px 24px; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37,99,235,0.3); }
+              
+              /* PERBAIKAN CSS PRINT MASAL */
               @media print {
+                @page { margin: 5mm; }
                 body { background: white; padding: 0; margin: 0; }
                 .header, .no-print { display: none !important; }
-                .label-box { border: 1px dashed #999; border-radius: 0; margin: 0; }
-                .grid-container { gap: 5px; }
+                .label-box { border: 1px dashed #999; border-radius: 0; }
               }
             </style>
           </head>
           <body>
             <div class="header no-print">
-              <h1>Total ${inventoryList.length} Stiker QR</h1>
+              <h1>Total ${totalStikerDicetak} Stiker QR Siap Cetak</h1>
               <p>Pastikan gambar QR Code sudah termuat semua sebelum klik tombol cetak di bawah.</p>
               <button class="print-btn" onclick="window.print()">🖨️ Cetak Semua Sekarang</button>
             </div>
