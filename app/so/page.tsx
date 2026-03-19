@@ -10,8 +10,9 @@ export default function AdminDashboard() {
   const [pinInput, setPinInput] = useState("");
   const PIN_RAHASIA = "123456";
 
-  // State Navigasi Tab
-  const [activeTab, setActiveTab] = useState("scanner");
+  // State Navigasi Layout & Sidebar
+  const [activeTab, setActiveTab] = useState("dashboard"); // Default ke Dashboard kosong
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // State Tab 1: Scanner (SO)
   const [isScanning, setIsScanning] = useState(false);
@@ -420,86 +421,102 @@ export default function AdminDashboard() {
     );
   }
 
+  // Navigasi Item Helper
+  const NavItem = ({ id, icon, label }: { id: string, icon: string, label: string }) => (
+    <button 
+      onClick={() => { setActiveTab(id); setIsSidebarOpen(false); }}
+      className={`w-full flex items-center gap-4 px-6 py-4 transition-all duration-200 border-l-4 ${
+        activeTab === id 
+          ? "bg-blue-600/10 border-blue-600 text-blue-600" 
+          : "border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+      }`}
+    >
+      <span className="text-xl">{icon}</span>
+      <span className="font-bold text-sm">{label}</span>
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-12">
-      {/* HEADER */}
-      <header className="bg-slate-900 text-white shadow-lg sticky top-0 z-20 border-b border-slate-700">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-inner">
-              <span className="text-xl">🛠️</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-extrabold tracking-tight">GMF Inventory</h1>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold">Admin Central Control</p>
-            </div>
+    <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+      
+      {/* SIDEBAR (DESKTOP & MOBILE) */}
+      {/* Overlay untuk Mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Panel Sidebar */}
+      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-700 shadow-2xl md:shadow-none transform transition-transform duration-300 ease-in-out flex flex-col ${
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      }`}>
+        <div className="p-8 border-b border-slate-700 flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-inner text-white text-2xl">
+            🛠️
           </div>
+          <div>
+            <h1 className="text-lg font-black tracking-tight text-white">GMF Admin</h1>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-0.5">Control Center</p>
+          </div>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto py-6 space-y-1">
+          <NavItem id="dashboard" icon="📊" label="Overview" />
+          <NavItem id="scanner" icon="🔍" label="Audit (SO)" />
+          <NavItem id="inventory" icon="📦" label="Master Stok" />
+          <NavItem id="history" icon="📜" label="Log Riwayat" />
+          <NavItem id="requests" icon="📥" label="Antrean Request" />
+        </nav>
+
+        <div className="p-6 border-t border-slate-700">
           <button 
             onClick={() => setIsAuthenticated(false)} 
-            className="group flex items-center gap-2 bg-slate-800 hover:bg-red-600/90 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 shadow-sm"
+            className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white font-bold py-3 rounded-xl transition-colors text-sm border-2 border-red-500 hover:border-red-700"
           >
-            <span>Keluar</span>
-            <span className="group-hover:translate-x-1 transition-transform">→</span>
+            Keluar Sistem
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* NAVIGATION TABS */}
-      <nav className="max-w-5xl mx-auto px-6 mt-8 overflow-x-auto">
-        <div className="flex p-1.5 bg-slate-200/50 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-inner min-w-max">
-          <button 
-            onClick={() => setActiveTab("scanner")} 
-            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
-              activeTab === "scanner" 
-                ? "bg-blue-600 text-white shadow-md ring-1 ring-blue-300" 
-                : "bg-white text-slate-500 hover:text-slate-700 hover:bg-white/50"
-            }`}
-          >
-            <span className={activeTab === "scanner" ? "text-amber-300" : ""}>🔍</span>
-            Audit (SO)
-          </button>
-          <button 
-            onClick={() => setActiveTab("inventory")} 
-            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
-              activeTab === "inventory" 
-                ? "bg-blue-600 text-white shadow-md ring-1 ring-blue-300" 
-                : "bg-white text-slate-500 hover:text-slate-700 hover:bg-white/50"
-            }`}
-          >
-            <span className={activeTab === "inventory" ? "text-blue-300" : ""}>📦</span>
-            Master Stok
-          </button>
-          <button 
-            onClick={() => setActiveTab("history")} 
-            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
-              activeTab === "history" 
-                ? "bg-blue-600 text-white shadow-md ring-1 ring-blue-300" 
-                : "bg-white text-slate-500 hover:text-slate-700 hover:bg-white/50"
-            }`}
-          >
-            <span className={activeTab === "history" ? "text-green-300" : ""}>📜</span>
-            Riwayat
-          </button>
-
-          {/* TAB BARU: REQUEST BARANG */}
-          <button 
-            onClick={() => setActiveTab("requests")} 
-            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
-              activeTab === "requests" 
-                ? "bg-blue-600 text-white shadow-md ring-1 ring-blue-300" 
-                : "bg-white text-slate-500 hover:text-slate-700 hover:bg-white/50"
-            }`}
-          >
-            <span className={activeTab === "requests" ? "text-purple-300" : ""}>📥</span>
-            Request
-          </button>
-        </div>
-      </nav>
-
-      <main className="max-w-5xl mx-auto px-6 mt-8">
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         
-        {/* TAB 1: SCANNER SO */}
-        {activeTab === "scanner" && (
+        {/* HEADER BARS (Mobile Hamburger + Page Title) */}
+        <header className="bg-slate-900 border-b border-slate-700 px-6 py-4 flex items-center justify-between z-10 sticky top-0">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden p-2 text-slate-300 hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <h2 className="text-xl font-black text-slate-100 tracking-tight capitalize">
+              {activeTab === "scanner" ? "Audit Stock Opname" : activeTab.replace("-", " ")}
+            </h2>
+          </div>
+        </header>
+
+        {/* SCROLLABLE CONTENT */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+          <div className="max-w-6xl mx-auto">
+
+            {/* TAB 0: DASHBOARD KOSONG (UNTUK INVESTIGASI WIDGET NANTI) */}
+            {activeTab === "dashboard" && (
+              <div className="w-full h-[60vh] flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-[2rem] bg-slate-50/50 animate-in fade-in duration-500 p-8 text-center">
+                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6 text-4xl border border-slate-100">
+                  💡
+                </div>
+                <h3 className="text-2xl font-black text-slate-800 mb-2">Dashboard Overview</h3>
+                <p className="text-slate-500 max-w-md mx-auto leading-relaxed">
+                  Halaman ini sengaja dikosongkan untuk tempat investigasi. Nantinya kita bisa menaruh widget statistik seperti Total Barang, Barang Menipis, Grafik Peminjaman, dll di sini.
+                </p>
+              </div>
+            )}
+            
+            {/* TAB 1: SCANNER SO */}
+            {activeTab === "scanner" && (
           <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             {!isScanning && !isLoadingScan && !itemData && !errorMsg && (
               <div className="bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 text-center group">
@@ -514,7 +531,7 @@ export default function AdminDashboard() {
                 >
                   AKTIFKAN KAMERA
                 </button>
-              </div>
+              </div> 
             )}
             {isScanning && (
               <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200 text-center animate-in zoom-in-95 duration-300">
@@ -888,7 +905,9 @@ export default function AdminDashboard() {
           </div>
         )}
 
-      </main>
+          </div>
+        </main>
+      </div>
 
       {/* MODAL: TAMBAH / EDIT BARANG (POPUP) */}
       {showAddModal && (
@@ -999,7 +1018,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
