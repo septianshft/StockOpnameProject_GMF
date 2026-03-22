@@ -23,6 +23,7 @@ export default function Home() {
   // === STATE BARU: SISTEM KERANJANG (CART) ===
   const [cart, setCart] = useState<CartItem[]>([]);
   const [namaPeminjam, setNamaPeminjam] = useState("");
+  const [nomorPegawai, setNomorPegawai] = useState(""); // STATE BARU: NIK dari referemce.tsx
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // === STATE FITUR REQUEST BARANG ===
@@ -106,7 +107,7 @@ export default function Home() {
 
   // PROSES SEMUA BARANG SEKALIGUS
   const handleProsesAmbil = async () => {
-    if (!namaPeminjam.trim()) return alert("⚠️ Nama Peminjam tidak boleh kosong!");
+    if (!namaPeminjam.trim() || !nomorPegawai.trim()) return alert("⚠️ Nama dan Nomor Pegawai wajib diisi!");
     if (cart.length === 0) return alert("⚠️ Keranjang masih kosong!");
 
     setIsSubmitting(true);
@@ -132,17 +133,19 @@ export default function Home() {
             part_name: item.part_name,
             part_number: item.part_number,
             nama_peminjam: namaPeminjam,
+            nomor_pegawai: nomorPegawai, // INSERT NIK KE DATABASE sesuai referemce.tsx
             jumlah: item.quantity_to_take
           }]);
 
         if (errorInsert) throw errorInsert;
       }
 
-      alert(`✅ BERHASIL!\n\n${cart.length} jenis barang telah diproses untuk ${namaPeminjam}.`);
+      alert(`✅ BERHASIL!\n\n${cart.length} jenis barang telah diproses.`);
       
       // Bersihkan keranjang & form setelah sukses
       setCart([]);
       setNamaPeminjam("");
+      setNomorPegawai("");
       
     } catch (err) {
       console.error("Gagal update database:", err);
@@ -242,7 +245,7 @@ export default function Home() {
                   onClick={() => setIsScanning(false)}
                   className="w-full bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 font-bold py-4 rounded-xl transition-all"
                 >
-                  {cart.length > 0 ? "Selesai Scan & Lihat Keranjang" : "Batal"}
+                  {cart.length > 0 ? "Selesai Scan" : "Batal"}
                 </button>
               </div>
             </div>
@@ -319,16 +322,30 @@ export default function Home() {
                   <span className="text-xl">📷</span> Tambah Barang Lain
                 </button>
 
-                {/* Form Input Peminjam */}
+                {/* Form Input Peminjam Sesuai referemce.tsx */}
                 <div className="pt-6 border-t border-slate-200">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Nama Peminjam (Wajib)</label>
-                  <input 
-                    type="text" 
-                    value={namaPeminjam}
-                    onChange={(e) => setNamaPeminjam(e.target.value)}
-                    className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-5 text-sm font-bold text-slate-900 transition-all outline-none shadow-sm mb-6" 
-                    placeholder="Ketik nama lengkap..." 
-                  />
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">No. Pegawai *</label>
+                      <input 
+                        type="text" 
+                        value={nomorPegawai} 
+                        onChange={(e) => setNomorPegawai(e.target.value)} 
+                        className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none transition-all shadow-sm" 
+                        placeholder="Misal: 12345" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Nama *</label>
+                      <input 
+                        type="text" 
+                        value={namaPeminjam} 
+                        onChange={(e) => setNamaPeminjam(e.target.value)} 
+                        className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none transition-all shadow-sm" 
+                        placeholder="Nama..." 
+                      />
+                    </div>
+                  </div>
 
                   <div className="flex gap-4">
                     <button onClick={() => setCart([])} disabled={isSubmitting} className="flex-1 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 py-5 rounded-2xl font-bold transition-all">
@@ -346,19 +363,19 @@ export default function Home() {
       </main>
 
       {/* ==========================================
-          MODAL: REQUEST BARANG (TIDAK BERUBAH)
+          MODAL: REQUEST BARANG (TETAP ADA)
           ========================================== */}
       {showReqModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300 border border-slate-200">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50"><div><h2 className="font-black text-xl text-slate-900 tracking-tight">Request Barang</h2><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Pengajuan Stok Baru</p></div><button onClick={() => setShowReqModal(false)} className="w-10 h-10 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full flex items-center justify-center font-bold transition-colors">✕</button></div>
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50"><div><h2 className="font-black text-xl text-slate-900 tracking-tight">Chemical Request</h2><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Pengajuan Stok Baru</p></div><button onClick={() => setShowReqModal(false)} className="w-10 h-10 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full flex items-center justify-center font-bold transition-colors">✕</button></div>
             <div className="p-8 overflow-y-auto">
               <form onSubmit={handleSubmitRequest} className="space-y-6">
-                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Nama Pemohon *</label><input type="text" required value={reqData.nama} onChange={(e) => setReqData({...reqData, nama: e.target.value})} className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 transition-all outline-none" placeholder="Nama lengkap..." /></div>
-                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Nama Barang *</label><input type="text" required value={reqData.barang} onChange={(e) => setReqData({...reqData, barang: e.target.value})} className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 transition-all outline-none" placeholder="Misal: Santovac 5" /></div>
-                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Jumlah *</label><input type="number" required min="1" value={reqData.jumlah} onChange={(e) => setReqData({...reqData, jumlah: e.target.value})} className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 transition-all outline-none" placeholder="Contoh: 2" /></div>
-                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Keterangan / Urgensi</label><textarea rows={2} value={reqData.keterangan} onChange={(e) => setReqData({...reqData, keterangan: e.target.value})} className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 transition-all outline-none resize-none" placeholder="Untuk kebutuhan project apa..." /></div>
-                <div className="flex gap-4 pt-2 border-t border-slate-100 mt-4"><button type="button" onClick={() => setShowReqModal(false)} className="flex-1 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 py-4 rounded-2xl font-bold transition-all">Batal</button><button type="submit" disabled={isSubmittingReq} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-lg disabled:opacity-50 flex justify-center items-center">{isSubmittingReq ? "Mengirim..." : "KIRIM REQUEST"}</button></div>
+                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Requester Name *</label><input type="text" required value={reqData.nama} onChange={(e) => setReqData({...reqData, nama: e.target.value})} className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 transition-all outline-none" placeholder="Fullname...." /></div>
+                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Item Name *</label><input type="text" required value={reqData.barang} onChange={(e) => setReqData({...reqData, barang: e.target.value})} className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 transition-all outline-none" placeholder="Example: Santovac 5" /></div>
+                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Quantity *</label><input type="number" required min="1" value={reqData.jumlah} onChange={(e) => setReqData({...reqData, jumlah: e.target.value})} className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 transition-all outline-none" placeholder="Example: 2" /></div>
+                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Request Description *</label><textarea rows={2} value={reqData.keterangan} onChange={(e) => setReqData({...reqData, keterangan: e.target.value})} className="w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl p-4 text-sm font-bold text-slate-900 transition-all outline-none resize-none" placeholder="Untuk kebutuhan project apa..." /></div>
+                <div className="flex gap-4 pt-2 border-t border-slate-100 mt-4"><button type="button" onClick={() => setShowReqModal(false)} className="flex-1 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 py-4 rounded-2xl font-bold transition-all">Cancel</button><button type="submit" disabled={isSubmittingReq} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-lg disabled:opacity-50 flex justify-center items-center">{isSubmittingReq ? "Mengirim..." : "Send"}</button></div>
               </form>
             </div>
           </div>

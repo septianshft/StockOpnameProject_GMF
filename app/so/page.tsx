@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import QRScanner from "@/components/QRScanner";
 import { supabase } from "@/lib/supabase";
 
@@ -29,6 +29,31 @@ export default function AdminDashboard() {
   const [requestList, setRequestList] = useState<any[]>([]); // State baru untuk request
   const [isLoadingData, setIsLoadingData] = useState(false);
 
+  // === LOGIKA STATISTIK DASHBOARD ===
+  const dashboardStats = useMemo(() => {
+    const lowStockCount = inventoryList.filter(item => Number(item.quantity) <= 5).length;
+    const pendingReqCount = requestList.filter(req => req.status === "PENDING").length;
+    const actualBorrowings = historyList.filter(log => log.nama_peminjam !== "ADMIN (SO)" && log.jumlah > 0);
+
+    const itemFreq: Record<string, number> = {};
+    actualBorrowings.forEach(log => { itemFreq[log.part_name] = (itemFreq[log.part_name] || 0) + log.jumlah; });
+    const topItems = Object.entries(itemFreq).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const maxItemCount = topItems.length > 0 ? topItems[0][1] : 1;
+
+    // LOGIKA BARU: Grouping pakai NIK
+    const userFreq: Record<string, number> = {};
+    actualBorrowings.forEach(log => {
+      // Gabungkan Nama dan NIK sebagai kunci biar terbaca jelas di grafik
+      // Jika NIK kosong (data lama), pakai namanya saja
+      const userKey = log.nomor_pegawai ? `${log.nama_peminjam} (${log.nomor_pegawai})` : log.nama_peminjam;
+      userFreq[userKey] = (userFreq[userKey] || 0) + 1;
+    });
+    const topUsers = Object.entries(userFreq).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const maxUserCount = topUsers.length > 0 ? topUsers[0][1] : 1;
+
+    return { lowStockCount, pendingReqCount, topItems, maxItemCount, topUsers, maxUserCount, totalBorrowings: actualBorrowings.length };
+  }, [inventoryList, historyList, requestList]);
+
   // State Modal (Tambah & Edit)
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSavingItem, setIsSavingItem] = useState(false);
@@ -55,9 +80,17 @@ export default function AdminDashboard() {
   // --- FUNGSI AMBIL DATA TABEL ---
   useEffect(() => {
     if (isAuthenticated) {
+      fetchInventory();
+      fetchHistory();
+      fetchRequests();
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
       if (activeTab === "inventory") fetchInventory();
       if (activeTab === "history") fetchHistory();
-      if (activeTab === "requests") fetchRequests(); // Fetch data request saat tab aktif
+      if (activeTab === "requests") fetchRequests();
     }
   }, [activeTab, isAuthenticated]);
 
@@ -502,16 +535,68 @@ export default function AdminDashboard() {
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="max-w-6xl mx-auto">
 
-            {/* TAB 0: DASHBOARD KOSONG (UNTUK INVESTIGASI WIDGET NANTI) */}
+            {/* TAB 0: DASHBOARD OVERVIEW */}
             {activeTab === "dashboard" && (
-              <div className="w-full h-[60vh] flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-[2rem] bg-slate-50/50 animate-in fade-in duration-500 p-8 text-center">
-                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6 text-4xl border border-slate-100">
-                  💡
+              <div className="space-y-8 animate-in fade-in duration-700">
+                {/* 1. STATS ROW */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl">📦</div>
+                    <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Barang</p><p className="text-2xl font-black text-slate-900">{inventoryList.length}</p></div>
+                  </div>
+                  <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center text-2xl">⚠️</div>
+                    <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Stok Menipis</p><p className="text-2xl font-black text-slate-900">{dashboardStats.lowStockCount}</p></div>
+                  </div>
+                  <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl">⏳</div>
+                    <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Req</p><p className="text-2xl font-black text-slate-900">{dashboardStats.pendingReqCount}</p></div>
+                  </div>
+                  <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center text-2xl">📜</div>
+                    <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Transaksi</p><p className="text-2xl font-black text-slate-900">{dashboardStats.totalBorrowings}</p></div>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-black text-slate-800 mb-2">Dashboard Overview</h3>
-                <p className="text-slate-500 max-w-md mx-auto leading-relaxed">
-                  Halaman ini sengaja dikosongkan untuk tempat investigasi. Nantinya kita bisa menaruh widget statistik seperti Total Barang, Barang Menipis, Grafik Peminjaman, dll di sini.
-                </p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* 2. TOP ITEMS CHART */}
+                  <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center">🔥</div>
+                      <h3 className="font-black text-slate-900 uppercase tracking-tight">Barang Paling Sering Diambil</h3>
+                    </div>
+                    <div className="space-y-6">
+                      {dashboardStats.topItems.map(([name, count]) => (
+                        <div key={name} className="space-y-2">
+                          <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-500"><span>{name}</span><span>{count} Unit</span></div>
+                          <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-600 rounded-full transition-all duration-1000" style={{ width: `${(count / dashboardStats.maxItemCount) * 100}%` }}></div>
+                          </div>
+                        </div>
+                      ))}
+                      {dashboardStats.topItems.length === 0 && <p className="text-center py-10 text-slate-400 font-bold">Belum ada data pengambilan.</p>}
+                    </div>
+                  </div>
+
+                  {/* 3. TOP USERS CHART */}
+                  <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center">👤</div>
+                      <h3 className="font-black text-slate-900 uppercase tracking-tight">Peminjam Teraktif</h3>
+                    </div>
+                    <div className="space-y-6">
+                      {dashboardStats.topUsers.map(([user, count]) => (
+                        <div key={user} className="space-y-2">
+                          <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-500"><span>{user}</span><span>{count} Kali</span></div>
+                          <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-slate-900 rounded-full transition-all duration-1000" style={{ width: `${(count / dashboardStats.maxUserCount) * 100}%` }}></div>
+                          </div>
+                        </div>
+                      ))}
+                      {dashboardStats.topUsers.length === 0 && <p className="text-center py-10 text-slate-400 font-bold">Belum ada data peminjam.</p>}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             
@@ -770,11 +855,14 @@ export default function AdminDashboard() {
                               Audit Admin
                             </span>
                           ) : (
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center text-xs font-black text-blue-600 uppercase">
                                 {log.nama_peminjam?.charAt(0) || "?"}
                               </div>
-                              <p className="text-sm font-extrabold text-slate-900">{log.nama_peminjam}</p>
+                              <div>
+                                <p className="text-sm font-extrabold text-slate-900">{log.nama_peminjam}</p>
+                                <p className="text-[10px] font-mono text-slate-500 mt-0.5">NIK: {log.nomor_pegawai || "—"}</p>
+                              </div>
                             </div>
                           )}
                         </td>
