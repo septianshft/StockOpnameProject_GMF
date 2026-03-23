@@ -58,7 +58,7 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
       setIsStarted(true);
     } catch (err: any) {
       console.error("Failed to start scanner:", err);
-      setError("Gagal mengakses kamera. Pastikan izin diberikan.");
+      setError("Failed to access camera. Please ensure camera permissions are granted.");
       setIsStarted(false);
     }
   };
@@ -89,7 +89,7 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
       onScanSuccess(decodedText);
     } catch (err) {
       console.error("File scan error:", err);
-      setError("Gagal membaca QR Code dari gambar. Pastikan gambar jelas.");
+      setError("Failed to read QR Code from image. Please ensure the image is clear.");
     }
   };
 
@@ -113,14 +113,14 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
             onClick={startScanner}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition active:scale-95"
           >
-            Aktifkan Kamera
+            Start Scanning
           </button>
         ) : (
           <button
             onClick={stopScanner}
             className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition active:scale-95"
           >
-            Matikan Kamera
+            Stop Scanning
           </button>
         )}
         
@@ -136,7 +136,7 @@ export default function QRScanner({ onScanSuccess }: QRScannerProps) {
             onClick={() => fileInputRef.current?.click()}
             className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg transition active:scale-95 flex items-center justify-center gap-2"
           >
-            <span>📁</span> Upload Gambar QR
+            <span>📁</span> Upload QR Image
           </button>
         </div>
       </div>
