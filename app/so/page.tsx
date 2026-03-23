@@ -483,7 +483,7 @@ export default function AdminDashboard() {
   }
 
   // Navigasi Item Helper - Redesigned Notion Minimalist
-  const NavItem = ({ id, icon, label }: { id: string, icon: string, label: string }) => (
+  const NavItem = ({ id, icon, label }: { id: string, icon: React.ReactNode, label: string }) => (
     <button 
       onClick={() => { setActiveTab(id); setIsSidebarOpen(false); }}
       className={`w-full flex items-center gap-4 px-6 py-3 transition-all duration-200 rounded-[4px] group ${
@@ -492,7 +492,7 @@ export default function AdminDashboard() {
           : "text-white/40 hover:bg-white/5 hover:text-white/80"
       }`}
     >
-      <span className={`text-xl transition-transform group-hover:scale-110 ${activeTab === id ? "opacity-100" : "opacity-40 group-hover:opacity-80"}`}>{icon}</span>
+      <span className={`text-xl transition-transform group-hover:scale-110 flex items-center justify-center w-6 h-6 ${activeTab === id ? "opacity-100" : "opacity-40 group-hover:opacity-80"}`}>{icon}</span>
       <span className="font-bold text-sm tracking-tight">{label}</span>
     </button>
   );
@@ -524,7 +524,7 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
-          <NavItem id="dashboard" icon={<img src="https://img.icons8.com/?size=100&id=117498&format=png&color=000000" className="w-6 h-6" alt="dashboard icon" />} label="Overview" />
+          <NavItem id="dashboard" icon={<img src="https://img.icons8.com/?size=100&id=117498&format=png&color=FFFFFF" className="w-5 h-5" alt="dashboard icon" />} label="Overview" />
           <NavItem id="scanner" icon={<img src="https://img.icons8.com/?size=100&id=42237&format=png&color=FFFFFF" className="w-5 h-5" alt="scanner icon" />} label="Audit (SO)" />
           <NavItem id="inventory" icon="📦" label="Master Stock" />
           <NavItem id="history" icon="📜" label="Log History" />
