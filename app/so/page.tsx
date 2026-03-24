@@ -524,11 +524,11 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
-          <NavItem id="dashboard" icon={<span className="text-xl">📊</span>} label="Overview" />
+          <NavItem id="dashboard" icon={<img src="https://img.icons8.com/?size=100&id=8322&format=png&color=FFFFFF" className="w-5 h-5" alt="dashboard" />} label="Overview" />
           <NavItem id="scanner" icon={<img src="https://img.icons8.com/?size=100&id=41efp61F6UJi&format=png&color=FFFFFF" className="w-5 h-5" alt="audit" />} label="Audit (SO)" />
-          <NavItem id="inventory" icon="📦" label="Master Stock" />
-          <NavItem id="history" icon="📜" label="Log History" />
-          <NavItem id="requests" icon="📥" label="Request Queue" /> 
+          <NavItem id="inventory" icon={<img src="https://img.icons8.com/?size=100&id=DlNS9fNLzyOd&format=png&color=FFFFFF" className="w-5 h-5" alt="inventory" />} label="Master Stock" />
+          <NavItem id="history" icon={<img src="https://img.icons8.com/?size=100&id=58760&format=png&color=FFFFFF" className="w-5 h-5" alt="history" />} label="Log History" />
+          <NavItem id="requests" icon={<img src="https://img.icons8.com/?size=100&id=124442&format=png&color=FFFFFF" className="w-5 h-5" alt="requests" />} label="Request Queue" /> 
         </nav>
 
         <div className="p-6 shadow-[0_-1px_0_0_rgba(255,255,255,0.06)]">
