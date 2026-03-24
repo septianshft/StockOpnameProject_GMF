@@ -525,7 +525,7 @@ export default function AdminDashboard() {
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
           <NavItem id="dashboard" icon={<span className="text-xl">📊</span>} label="Overview" />
-          <NavItem id="scanner" icon={<span className="text-xl">📷</span>} label="Audit (SO)" />
+          <NavItem id="scanner" icon={<img src="https://img.icons8.com/?size=100&id=41efp61F6UJi&format=png&color=FFFFFF" className="w-5 h-5" alt="audit" />} label="Audit (SO)" />
           <NavItem id="inventory" icon="📦" label="Master Stock" />
           <NavItem id="history" icon="📜" label="Log History" />
           <NavItem id="requests" icon="📥" label="Request Queue" /> 
