@@ -81,6 +81,16 @@ export default function AdminDashboard() {
 
   // --- FUNGSI AMBIL DATA TABEL ---
   useEffect(() => {
+    // Watermark Console (Hanya terlihat oleh Developer yang Inspect Element)
+    console.info(
+      "%c🚀 GMF Inventory Control System\n%cArchitected & Engineered by Septian Rizqi Arifandi (Industrial Engineering)\n%cOriginal Source: https://github.com/septianshft/StockOpnameProject_GMF.git",
+      "color: #2563eb; font-size: 20px; font-weight: 900;",
+      "color: #475569; font-size: 14px; font-weight: bold; margin-top: 5px;",
+      "color: #64748b; font-size: 12px; margin-top: 10px;"
+    );
+  }, []);
+
+  useEffect(() => {
     if (isAuthenticated) {
       fetchInventory();
       fetchHistory();
@@ -149,7 +159,7 @@ export default function AdminDashboard() {
     setStokFisik("");
 
     try {
-      const { data, error } = await supabase.from("inventory").select("*").eq("barcode_id", decodedText).maybeSingle(); 
+      const { data, error } = await supabase.from("inventory").select("*").eq("barcode_id", decodedText).maybeSingle();
       if (error) setErrorMsg("Terjadi kesalahan saat membaca database.");
       else if (!data) setErrorMsg("Barang tidak ditemukan di database.");
       else setItemData(data);
@@ -272,7 +282,7 @@ export default function AdminDashboard() {
       const { error } = await supabase.from("inventory").delete().eq("id", id);
       if (error) throw error;
       alert(`🗑️ Barang "${namaBarang}" berhasil dihapus.`);
-      fetchInventory(); 
+      fetchInventory();
     } catch (err: any) {
       if (err.code === '23503') {
         alert(`❌ GAGAL MENGHAPUS!\n\nBarang "${namaBarang}" memiliki riwayat transaksi/peminjaman.\n\nSistem mengunci penghapusan agar riwayat tidak rusak.`);
@@ -286,7 +296,7 @@ export default function AdminDashboard() {
   const handleCetakQR = (item: any) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      
+
       let itemsHtml = "";
       // Ambil quantity, minimal 1 (jaga-jaga kalau stok 0 tapi admin butuh cetak 1 stiker buat nempel di rak kosong)
       const qty = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
@@ -362,7 +372,7 @@ export default function AdminDashboard() {
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      
+
       // PERBAIKAN LOGIKA LOOPING BERDASARKAN QTY BARANG
       let itemsHtml = "";
       let totalStikerDicetak = 0;
@@ -435,8 +445,8 @@ export default function AdminDashboard() {
   };
 
   // Filter list inventory berdasarkan pencarian (Nama atau PN)
-  const filteredInventory = inventoryList.filter(item => 
-    item.part_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredInventory = inventoryList.filter(item =>
+    item.part_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.part_number?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -452,7 +462,7 @@ export default function AdminDashboard() {
           </div>
           <h1 className="text-base font-black text-white/90 mb-1 uppercase tracking-tight leading-normal">Admin Dashboard</h1>
           <p className="text-sm text-white/40 mb-8 font-medium leading-normal">Masukkan PIN untuk mengakses sistem</p>
-          
+
           <form onSubmit={handleLoginAdmin} className="space-y-6">
             <input
               type="password"
@@ -463,16 +473,16 @@ export default function AdminDashboard() {
               maxLength={6}
               autoFocus
             />
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="w-full bg-white/10 hover:bg-white/15 text-white/90 font-bold py-4 rounded-[4px] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] transition-all active:scale-[0.98] uppercase text-xs tracking-[0.2em]"
             >
               Masuk
             </button>
           </form>
-          
-          <a 
-            href="/" 
+
+          <a
+            href="/"
             className="block mt-8 text-[10px] font-black uppercase tracking-[0.15em] text-white/20 hover:text-white/60 underline decoration-white/10 underline-offset-4 transition-colors"
           >
             Kembali ke Peminjaman Karyawan
@@ -484,13 +494,12 @@ export default function AdminDashboard() {
 
   // Navigasi Item Helper - Redesigned Notion Minimalist
   const NavItem = ({ id, icon, label }: { id: string, icon: React.ReactNode, label: string }) => (
-    <button 
+    <button
       onClick={() => { setActiveTab(id); setIsSidebarOpen(false); }}
-      className={`w-full flex items-center gap-4 px-6 py-3 transition-all duration-200 rounded-[4px] group ${
-        activeTab === id 
-          ? "bg-white/10 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.06)]" 
-          : "text-white/40 hover:bg-white/5 hover:text-white/80"
-      }`}
+      className={`w-full flex items-center gap-4 px-6 py-3 transition-all duration-200 rounded-[4px] group ${activeTab === id
+        ? "bg-white/10 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
+        : "text-white/40 hover:bg-white/5 hover:text-white/80"
+        }`}
     >
       <span className={`text-xl transition-transform group-hover:scale-110 flex items-center justify-center w-6 h-6 ${activeTab === id ? "opacity-100" : "opacity-40 group-hover:opacity-80"}`}>{icon}</span>
       <span className="font-bold text-sm tracking-tight">{label}</span>
@@ -499,20 +508,19 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-screen bg-[#1e1e1e] font-sans text-white overflow-hidden selection:bg-blue-500/30">
-      
+
       {/* SIDEBAR (DESKTOP & MOBILE) */}
       {/* Overlay untuk Mobile */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Panel Sidebar - Notion Aesthetic */}
-      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-[#1e1e1e] shadow-[1px_0_0_0_rgba(255,255,255,0.06)] transform transition-transform duration-300 ease-in-out flex flex-col ${
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-      }`}>
+      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-[#1e1e1e] shadow-[1px_0_0_0_rgba(255,255,255,0.06)] transform transition-transform duration-300 ease-in-out flex flex-col ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}>
         <div className="p-8 shadow-[0_1px_0_0_rgba(255,255,255,0.06)] flex items-center gap-4">
           <div className="w-10 h-10 bg-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.1)] rounded-[4px] flex items-center justify-center text-white text-xl">
             🛠️
@@ -528,12 +536,12 @@ export default function AdminDashboard() {
           <NavItem id="scanner" icon={<img src="https://img.icons8.com/?size=100&id=41efp61F6UJi&format=png&color=FFFFFF" className="w-6 h-6" alt="audit" />} label="Audit (SO)" />
           <NavItem id="inventory" icon={<img src="https://img.icons8.com/?size=100&id=DlNS9fNLzyOd&format=png&color=FFFFFF" className="w-6 h-6" alt="inventory" />} label="Master Stock" />
           <NavItem id="history" icon={<img src="https://img.icons8.com/?size=100&id=58760&format=png&color=FFFFFF" className="w-6 h-6" alt="history" />} label="Log History" />
-          <NavItem id="requests" icon={<img src="https://img.icons8.com/?size=100&id=124442&format=png&color=FFFFFF" className="w-6 h-6" alt="requests" />} label="Request Queue" /> 
+          <NavItem id="requests" icon={<img src="https://img.icons8.com/?size=100&id=124442&format=png&color=FFFFFF" className="w-6 h-6" alt="requests" />} label="Request Queue" />
         </nav>
 
         <div className="p-6 shadow-[0_-1px_0_0_rgba(255,255,255,0.06)]">
-          <button 
-            onClick={() => setIsAuthenticated(false)} 
+          <button
+            onClick={() => setIsAuthenticated(false)}
             className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-red-500/10 text-white/30 hover:text-red-400 font-bold py-3 rounded-[4px] transition-all text-xs uppercase tracking-widest shadow-[0_0_0_1px_rgba(255,255,255,0.06)] hover:shadow-[0_0_0_1px_rgba(239,68,68,0.2)]"
           >
             Logout System
@@ -543,11 +551,11 @@ export default function AdminDashboard() {
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-        
+
         {/* HEADER BARS (Mobile Hamburger + Page Title) */}
         <header className="bg-[#1e1e1e] shadow-[0_1px_0_0_rgba(255,255,255,0.06)] px-8 py-4 flex items-center justify-between z-10 sticky top-0">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(true)}
               className="md:hidden p-2 text-white/40 hover:bg-white/5 rounded-[4px] transition-colors"
             >
@@ -574,8 +582,8 @@ export default function AdminDashboard() {
                     { label: "Pending Req", value: dashboardStats.pendingReqCount, icon: "⏳", color: "text-amber-400", bg: "bg-amber-500/10" },
                     { label: "Total Transaksi", value: dashboardStats.totalBorrowings, icon: "📜", color: "text-green-400", bg: "bg-green-500/10" }
                   ].map((stat, idx) => (
-                    <div 
-                      key={idx} 
+                    <div
+                      key={idx}
                       className="col-span-12 sm:col-span-6 lg:col-span-3 bg-[#1e1e1e] p-6 rounded-[4px] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.08)] transition-all flex items-center gap-4 group"
                     >
                       <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-[4px] flex items-center justify-center text-2xl shadow-[0_0_0_1px_rgba(255,255,255,0.04)]`}>
@@ -604,8 +612,8 @@ export default function AdminDashboard() {
                             <span>{count} Unit</span>
                           </div>
                           <div className="h-2 bg-white/5 rounded-full overflow-hidden shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
-                            <div 
-                              className="h-full bg-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.3)]" 
+                            <div
+                              className="h-full bg-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
                               style={{ width: `${(count / dashboardStats.maxItemCount) * 100}%` }}
                             ></div>
                           </div>
@@ -631,8 +639,8 @@ export default function AdminDashboard() {
                             <span>{count} Kali</span>
                           </div>
                           <div className="h-2 bg-white/5 rounded-full overflow-hidden shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
-                            <div 
-                              className="h-full bg-white/80 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(255,255,255,0.2)]" 
+                            <div
+                              className="h-full bg-white/80 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(255,255,255,0.2)]"
                               style={{ width: `${(count / dashboardStats.maxUserCount) * 100}%` }}
                             ></div>
                           </div>
@@ -646,415 +654,413 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
-            
+
             {/* TAB 1: SCANNER SO */}
             {activeTab === "scanner" && (
-          <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {!isScanning && !isLoadingScan && !itemData && !errorMsg && (
-              <div className="bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 text-center group">
-                <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <span className="text-4xl">📷</span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-2">Start Stock Opname</h3>
-                <p className="text-slate-500 text-sm mb-8">Point camera at QR Code to perform physical inventory audit.</p>
-                <button 
-                  onClick={() => setIsScanning(true)} 
-                  className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95"
-                >
-                  Start Scanning
-                </button>
-              </div> 
-            )}
-            {isScanning && (
-              <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200 text-center animate-in zoom-in-95 duration-300">
-                <div className="mb-4 flex items-center justify-center gap-2 text-slate-500 font-medium">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                  </span>
-                  <span className="text-slate-500 font-medium">Scanning in progress...</span>
-                </div>
-                <QRScanner onScanSuccess={handleScanSuccess} />
-                <button 
-                  onClick={() => setIsScanning(false)} 
-                  className="mt-6 w-full bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 font-bold py-3 rounded-xl transition-colors"
-                >
-                  Cancel Scanning
-                </button>
-              </div>
-            )}
-            {isLoadingScan && (
-              <div className="bg-white p-20 rounded-3xl shadow-xl border border-slate-200 text-center">
-                <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-slate-500 font-bold">Searching for item data...</p>
-              </div>
-            )}
-            {errorMsg && !isLoadingScan && (
-              <div className="bg-white p-10 rounded-3xl shadow-xl border border-red-100 text-center animate-in shake duration-500">
-                <div className="text-5xl mb-4">⚠️</div>
-                <h3 className="text-lg font-bold text-red-600 mb-2">Error Encountered</h3>
-                <p className="text-slate-500 text-sm mb-6">{errorMsg}</p>
-                <button 
-                  onClick={resetScanTampilan} 
-                  className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
-            )}
-            {itemData && !isLoadingScan && (
-              <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200 border border-slate-200 overflow-hidden animate-in slide-in-from-top-4 duration-500">
-                <div className="bg-slate-900 p-8 text-white relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-                  <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest mb-3">Audit Item</span>
-                  <h2 className="text-2xl font-black">{itemData.part_name}</h2>
-                  <div className="mt-6 flex items-end justify-between">
-                    <div>
-                      <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Stok Sistem</p>
-                      <p className="text-3xl font-black text-amber-400">{itemData.quantity} <span className="text-sm font-medium text-slate-400 uppercase tracking-normal">unit</span></p>
+              <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {!isScanning && !isLoadingScan && !itemData && !errorMsg && (
+                  <div className="bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 text-center group">
+                    <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <span className="text-4xl">📷</span>
                     </div>
-                    <div className="text-right">
-                      <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Lokasi</p>
-                      <p className="text-lg font-bold text-slate-200">{itemData.location || "N/A"}</p>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">Start Stock Opname</h3>
+                    <p className="text-slate-500 text-sm mb-8">Point camera at QR Code to perform physical inventory audit.</p>
+                    <button
+                      onClick={() => setIsScanning(true)}
+                      className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95"
+                    >
+                      Start Scanning
+                    </button>
+                  </div>
+                )}
+                {isScanning && (
+                  <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200 text-center animate-in zoom-in-95 duration-300">
+                    <div className="mb-4 flex items-center justify-center gap-2 text-slate-500 font-medium">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                      </span>
+                      <span className="text-slate-500 font-medium">Scanning in progress...</span>
+                    </div>
+                    <QRScanner onScanSuccess={handleScanSuccess} />
+                    <button
+                      onClick={() => setIsScanning(false)}
+                      className="mt-6 w-full bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 font-bold py-3 rounded-xl transition-colors"
+                    >
+                      Cancel Scanning
+                    </button>
+                  </div>
+                )}
+                {isLoadingScan && (
+                  <div className="bg-white p-20 rounded-3xl shadow-xl border border-slate-200 text-center">
+                    <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-slate-500 font-bold">Searching for item data...</p>
+                  </div>
+                )}
+                {errorMsg && !isLoadingScan && (
+                  <div className="bg-white p-10 rounded-3xl shadow-xl border border-red-100 text-center animate-in shake duration-500">
+                    <div className="text-5xl mb-4">⚠️</div>
+                    <h3 className="text-lg font-bold text-red-600 mb-2">Error Encountered</h3>
+                    <p className="text-slate-500 text-sm mb-6">{errorMsg}</p>
+                    <button
+                      onClick={resetScanTampilan}
+                      className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                )}
+                {itemData && !isLoadingScan && (
+                  <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200 border border-slate-200 overflow-hidden animate-in slide-in-from-top-4 duration-500">
+                    <div className="bg-slate-900 p-8 text-white relative">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                      <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest mb-3">Audit Item</span>
+                      <h2 className="text-2xl font-black">{itemData.part_name}</h2>
+                      <div className="mt-6 flex items-end justify-between">
+                        <div>
+                          <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Stok Sistem</p>
+                          <p className="text-3xl font-black text-amber-400">{itemData.quantity} <span className="text-sm font-medium text-slate-400 uppercase tracking-normal">unit</span></p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Lokasi</p>
+                          <p className="text-lg font-bold text-slate-200">{itemData.location || "N/A"}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-8 bg-slate-50/50">
+                      <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Input Stok Fisik Aktual</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={stokFisik}
+                          onChange={(e) => setStokFisik(e.target.value ? Number(e.target.value) : "")}
+                          className="w-full bg-white border-2 border-slate-200 focus:border-blue-500 rounded-2xl p-6 text-3xl font-black text-center text-slate-900 transition-all outline-none shadow-sm"
+                          placeholder="0"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="flex gap-4 mt-8">
+                        <button
+                          onClick={resetScanTampilan}
+                          className="flex-1 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 py-4 rounded-2xl font-bold transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleUpdateStok}
+                          disabled={isSubmitting}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-200 transition-all active:scale-95"
+                        >
+                          {isSubmitting ? "Updating..." : "Adjust"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="p-8 bg-slate-50/50">
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Input Stok Fisik Aktual</label>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      value={stokFisik} 
-                      onChange={(e) => setStokFisik(e.target.value ? Number(e.target.value) : "")} 
-                      className="w-full bg-white border-2 border-slate-200 focus:border-blue-500 rounded-2xl p-6 text-3xl font-black text-center text-slate-900 transition-all outline-none shadow-sm" 
-                      placeholder="0" 
-                      autoFocus 
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: MASTER STOK - REDESIGNED NOTION MINIMALIST */}
+            {activeTab === "inventory" && (
+              <div className="bg-[#1e1e1e] text-white rounded-[4px] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] overflow-hidden animate-in fade-in duration-500">
+                {/* 12-Column Grid Layout with 64px Gutters and 24px Vertical Rhythm */}
+                <div className="p-8 grid grid-cols-12 gap-x-16 gap-y-6 items-start lg:items-center">
+                  <div className="col-span-12 lg:col-span-5">
+                    <h2 className="text-base font-black tracking-tight leading-normal">Item List</h2>
+                    <p className="text-sm text-white/50 font-medium leading-normal">Manage master data and print QR Codes.</p>
+                  </div>
+
+                  {/* BAR PENCARIAN - Minimalist style */}
+                  <div className="col-span-12 lg:col-span-4 relative group">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-blue-400 transition-colors">
+                      🔍
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Cari Nama atau PN..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-11 pr-4 py-2 bg-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] rounded-[4px] text-base font-medium text-white placeholder:text-white/20 focus:shadow-[0_0_0_1px_rgba(59,130,246,0.5)] outline-none transition-all"
                     />
                   </div>
-                  <div className="flex gap-4 mt-8">
-                    <button 
-                      onClick={resetScanTampilan} 
-                      className="flex-1 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 py-4 rounded-2xl font-bold transition-all"
+
+                  {/* ACTION BUTTONS */}
+                  <div className="col-span-12 lg:col-span-3 flex gap-3 shrink-0">
+                    <button
+                      onClick={handleCetakSemuaQR}
+                      className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] text-sm font-bold py-2 px-4 rounded-[4px] transition-all hover:text-white"
                     >
-                      Cancel
+                      <span>🖨️</span> Print All
                     </button>
-                    <button 
-                      onClick={handleUpdateStok} 
-                      disabled={isSubmitting} 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-200 transition-all active:scale-95"
+                    <button
+                      onClick={openAddModal}
+                      className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded-[4px] shadow-lg transition-all active:scale-95"
                     >
-                      {isSubmitting ? "Updating..." : "Adjust"}
+                      <span>+</span> Add
                     </button>
                   </div>
                 </div>
+
+                <div className="overflow-x-auto">
+                  {isLoadingData ? (
+                    <div className="py-20 text-center">
+                      <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full mx-auto mb-4"></div>
+                      <p className="text-white/40 font-medium">Memuat database...</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="shadow-[0_1px_0_0_rgba(255,255,255,0.06)] text-white/30 text-[10px] font-black uppercase tracking-widest">
+                          <th className="px-8 py-4">Item Info</th>
+                          <th className="px-8 py-4">Part Number</th>
+                          <th className="px-8 py-4 text-center">Batch Number</th>
+                          <th className="px-8 py-4 text-center">Expired Date</th>
+                          <th className="px-8 py-4 text-center">Location</th>
+                          <th className="px-8 py-4 text-center">Stock</th>
+                          <th className="px-8 py-4 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {filteredInventory.map((item) => (
+                          <tr key={item.id} className="group transition-colors hover:bg-white/[0.02] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+                            <td className="px-8 py-6">
+                              <p className="text-base font-extrabold text-white/90 group-hover:text-white transition-colors leading-normal break-words">{item.part_name}</p>
+                              <p className="text-[10px] font-mono text-white/30 mt-1 truncate max-w-[150px]">{item.barcode_id}</p>
+                            </td>
+                            <td className="px-8 py-6 text-base font-bold text-white/50 leading-normal">
+                              {item.part_number || "—"}
+                            </td>
+                            <td className="px-8 py-6 text-center text-sm font-medium text-white/50">
+                              {item.batch_number || "—"}
+                            </td>
+                            <td className="px-8 py-6 text-center text-sm font-medium text-white/50">
+                              {item.expired_date ? new Date(item.expired_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : "—"}
+                            </td>
+                            <td className="px-8 py-6 text-center">
+                              <span className="inline-block px-3 py-1 bg-white/5 text-white/60 rounded-[4px] text-xs font-bold shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+                                {item.location || "N/A"}
+                              </span>
+                            </td>
+                            <td className="px-8 py-6 text-center">
+                              <span className={`inline-block min-w-[3rem] py-1 px-3 rounded-[4px] font-black text-sm shadow-[0_0_0_1px_rgba(255,255,255,0.06)] ${Number(item.quantity) <= 5 ? "bg-red-500/10 text-red-400" : "bg-blue-500/10 text-blue-400"
+                                }`}>
+                                {item.quantity}
+                              </span>
+                            </td>
+                            <td className="px-8 py-6">
+                              <div className="flex justify-end items-center gap-4">
+                                <button onClick={() => handleCetakQR(item)} className="p-2 text-white/20 hover:text-white hover:bg-white/10 rounded-[4px] transition-all" title="Print QR">
+                                  🖨️
+                                </button>
+                                <button onClick={() => openEditModal(item)} className="p-2 text-white/20 hover:text-amber-400 hover:bg-white/10 rounded-[4px] transition-all" title="Edit">
+                                  ✏️
+                                </button>
+                                <button onClick={() => handleHapusBarang(item.id, item.part_name)} className="p-2 text-white/20 hover:text-red-400 hover:bg-white/10 rounded-[4px] transition-all" title="Hapus">
+                                  🗑️
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredInventory.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="px-8 py-20 text-center">
+                              <div className="text-4xl mb-4 opacity-20">📦</div>
+                              <p className="text-white/30 font-bold">No item found.</p>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
             )}
-          </div>
-        )}
 
-        {/* TAB 2: MASTER STOK - REDESIGNED NOTION MINIMALIST */}
-        {activeTab === "inventory" && (
-          <div className="bg-[#1e1e1e] text-white rounded-[4px] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] overflow-hidden animate-in fade-in duration-500">
-            {/* 12-Column Grid Layout with 64px Gutters and 24px Vertical Rhythm */}
-            <div className="p-8 grid grid-cols-12 gap-x-16 gap-y-6 items-start lg:items-center">
-              <div className="col-span-12 lg:col-span-5">
-                <h2 className="text-base font-black tracking-tight leading-normal">Item List</h2>
-                <p className="text-sm text-white/50 font-medium leading-normal">Manage master data and print QR Codes.</p>
-              </div>
-
-              {/* BAR PENCARIAN - Minimalist style */}
-              <div className="col-span-12 lg:col-span-4 relative group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-blue-400 transition-colors">
-                  🔍
-                </span>
-                <input 
-                  type="text" 
-                  placeholder="Cari Nama atau PN..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2 bg-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] rounded-[4px] text-base font-medium text-white placeholder:text-white/20 focus:shadow-[0_0_0_1px_rgba(59,130,246,0.5)] outline-none transition-all"
-                />
-              </div>
-              
-              {/* ACTION BUTTONS */}
-              <div className="col-span-12 lg:col-span-3 flex gap-3 shrink-0">
-                <button 
-                  onClick={handleCetakSemuaQR} 
-                  className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] text-sm font-bold py-2 px-4 rounded-[4px] transition-all hover:text-white"
-                >
-                  <span>🖨️</span> Print All
-                </button>
-                <button 
-                  onClick={openAddModal} 
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded-[4px] shadow-lg transition-all active:scale-95"
-                >
-                  <span>+</span> Add
-                </button>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              {isLoadingData ? (
-                <div className="py-20 text-center">
-                  <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full mx-auto mb-4"></div>
-                  <p className="text-white/40 font-medium">Memuat database...</p>
+            {/* TAB 3: RIWAYAT TRANSAKSI - REDESIGNED NOTION MINIMALIST */}
+            {activeTab === "history" && (
+              <div className="bg-[#1e1e1e] text-white rounded-[4px] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] overflow-hidden animate-in fade-in duration-500">
+                {/* Header with Grid */}
+                <div className="p-8 grid grid-cols-12 gap-x-16 gap-y-6 items-start lg:items-center">
+                  <div className="col-span-12">
+                    <h2 className="text-base font-black tracking-tight leading-normal">Log Aktivitas</h2>
+                    <p className="text-sm text-white/50 font-medium leading-normal">Pantau pergerakan stok dan penyesuaian audit.</p>
+                  </div>
                 </div>
-              ) : (
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="shadow-[0_1px_0_0_rgba(255,255,255,0.06)] text-white/30 text-[10px] font-black uppercase tracking-widest">
-                      <th className="px-8 py-4">Item Info</th>
-                      <th className="px-8 py-4">Part Number</th>
-                      <th className="px-8 py-4 text-center">Batch Number</th>
-                      <th className="px-8 py-4 text-center">Expired Date</th>
-                      <th className="px-8 py-4 text-center">Location</th>
-                      <th className="px-8 py-4 text-center">Stock</th>
-                      <th className="px-8 py-4 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {filteredInventory.map((item) => (
-                      <tr key={item.id} className="group transition-colors hover:bg-white/[0.02] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
-                        <td className="px-8 py-6">
-                          <p className="text-base font-extrabold text-white/90 group-hover:text-white transition-colors leading-normal break-words">{item.part_name}</p>
-                          <p className="text-[10px] font-mono text-white/30 mt-1 truncate max-w-[150px]">{item.barcode_id}</p>
-                        </td>
-                        <td className="px-8 py-6 text-base font-bold text-white/50 leading-normal">
-                          {item.part_number || "—"}
-                        </td>
-                        <td className="px-8 py-6 text-center text-sm font-medium text-white/50">
-                          {item.batch_number || "—"}
-                        </td>
-                        <td className="px-8 py-6 text-center text-sm font-medium text-white/50">
-                          {item.expired_date ? new Date(item.expired_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : "—"}
-                        </td>
-                        <td className="px-8 py-6 text-center">
-                          <span className="inline-block px-3 py-1 bg-white/5 text-white/60 rounded-[4px] text-xs font-bold shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
-                            {item.location || "N/A"}
-                          </span>
-                        </td>
-                        <td className="px-8 py-6 text-center">
-                          <span className={`inline-block min-w-[3rem] py-1 px-3 rounded-[4px] font-black text-sm shadow-[0_0_0_1px_rgba(255,255,255,0.06)] ${
-                            Number(item.quantity) <= 5 ? "bg-red-500/10 text-red-400" : "bg-blue-500/10 text-blue-400"
-                          }`}>
-                            {item.quantity}
-                          </span>
-                        </td>
-                        <td className="px-8 py-6">
-                          <div className="flex justify-end items-center gap-4">
-                            <button onClick={() => handleCetakQR(item)} className="p-2 text-white/20 hover:text-white hover:bg-white/10 rounded-[4px] transition-all" title="Print QR">
-                              🖨️
-                            </button>
-                            <button onClick={() => openEditModal(item)} className="p-2 text-white/20 hover:text-amber-400 hover:bg-white/10 rounded-[4px] transition-all" title="Edit">
-                              ✏️
-                            </button>
-                            <button onClick={() => handleHapusBarang(item.id, item.part_name)} className="p-2 text-white/20 hover:text-red-400 hover:bg-white/10 rounded-[4px] transition-all" title="Hapus">
-                              🗑️
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredInventory.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="px-8 py-20 text-center">
-                          <div className="text-4xl mb-4 opacity-20">📦</div>
-                          <p className="text-white/30 font-bold">No item found.</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* TAB 3: RIWAYAT TRANSAKSI - REDESIGNED NOTION MINIMALIST */}
-        {activeTab === "history" && (
-          <div className="bg-[#1e1e1e] text-white rounded-[4px] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] overflow-hidden animate-in fade-in duration-500">
-            {/* Header with Grid */}
-            <div className="p-8 grid grid-cols-12 gap-x-16 gap-y-6 items-start lg:items-center">
-              <div className="col-span-12">
-                <h2 className="text-base font-black tracking-tight leading-normal">Log Aktivitas</h2>
-                <p className="text-sm text-white/50 font-medium leading-normal">Pantau pergerakan stok dan penyesuaian audit.</p>
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              {isLoadingData ? (
-                <div className="py-20 text-center">
-                  <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full mx-auto mb-4"></div>
-                  <p className="text-white/40 font-medium">Memuat histori...</p>
-                </div>
-              ) : (
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="shadow-[0_1px_0_0_rgba(255,255,255,0.06)] text-white/30 text-[10px] font-black uppercase tracking-widest">
-                      <th className="px-8 py-4">Waktu & Tanggal</th>
-                      <th className="px-8 py-4">User / Peminjam</th>
-                      <th className="px-8 py-4">Detail Item</th>
-                      <th className="px-8 py-4 text-right">Perubahan</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {historyList.map((log) => (
-                      <tr key={log.id} className="group transition-colors hover:bg-white/[0.02] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
-                        <td className="px-8 py-6">
-                          <p className="text-base font-bold text-white/90 group-hover:text-white transition-colors leading-normal">
-                            {new Date(log.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </p>
-                          <p className="text-[10px] text-white/30 font-medium uppercase mt-0.5">
-                            {new Date(log.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </td>
-                        <td className="px-8 py-6">
-                          {log.nama_peminjam === "ADMIN (SO)" ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 rounded-[4px] text-[10px] font-black uppercase tracking-wider shadow-[0_0_0_1px_rgba(251,191,36,0.2)]">
-                              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
-                              Audit Admin
-                            </span>
-                          ) : (
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 bg-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] rounded-[4px] flex items-center justify-center text-xs font-black text-white/40 uppercase group-hover:text-white/60 transition-colors">
-                                {log.nama_peminjam?.charAt(0) || "?"}
+                <div className="overflow-x-auto">
+                  {isLoadingData ? (
+                    <div className="py-20 text-center">
+                      <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full mx-auto mb-4"></div>
+                      <p className="text-white/40 font-medium">Memuat histori...</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="shadow-[0_1px_0_0_rgba(255,255,255,0.06)] text-white/30 text-[10px] font-black uppercase tracking-widest">
+                          <th className="px-8 py-4">Waktu & Tanggal</th>
+                          <th className="px-8 py-4">User / Peminjam</th>
+                          <th className="px-8 py-4">Detail Item</th>
+                          <th className="px-8 py-4 text-right">Perubahan</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {historyList.map((log) => (
+                          <tr key={log.id} className="group transition-colors hover:bg-white/[0.02] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+                            <td className="px-8 py-6">
+                              <p className="text-base font-bold text-white/90 group-hover:text-white transition-colors leading-normal">
+                                {new Date(log.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </p>
+                              <p className="text-[10px] text-white/30 font-medium uppercase mt-0.5">
+                                {new Date(log.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </td>
+                            <td className="px-8 py-6">
+                              {log.nama_peminjam === "ADMIN (SO)" ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 rounded-[4px] text-[10px] font-black uppercase tracking-wider shadow-[0_0_0_1px_rgba(251,191,36,0.2)]">
+                                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                                  Audit Admin
+                                </span>
+                              ) : (
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] rounded-[4px] flex items-center justify-center text-xs font-black text-white/40 uppercase group-hover:text-white/60 transition-colors">
+                                    {log.nama_peminjam?.charAt(0) || "?"}
+                                  </div>
+                                  <div>
+                                    <p className="text-base font-extrabold text-white/90 group-hover:text-white transition-colors leading-normal break-words">{log.nama_peminjam}</p>
+                                    <p className="text-[10px] font-mono text-white/30 mt-0.5">Employee ID: {log.nomor_pegawai || "—"}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-8 py-6">
+                              <p className="text-base font-bold text-white/70 group-hover:text-white transition-colors leading-normal break-words">{log.part_name}</p>
+                              <p className="text-[10px] text-white/30 mt-0.5 font-mono">{log.part_number || "No Part Number"}</p>
+                            </td>
+                            <td className="px-8 py-6 text-right">
+                              <div className={`inline-flex items-center justify-end font-black text-sm ${log.jumlah < 0 ? "text-red-400" : "text-green-400"
+                                }`}>
+                                {log.jumlah > 0 ? (
+                                  <span className="mr-1 opacity-50">▲</span>
+                                ) : (
+                                  <span className="mr-1 opacity-50">▼</span>
+                                )}
+                                {Math.abs(log.jumlah)}
                               </div>
-                              <div>
-                                <p className="text-base font-extrabold text-white/90 group-hover:text-white transition-colors leading-normal break-words">{log.nama_peminjam}</p>
-                                <p className="text-[10px] font-mono text-white/30 mt-0.5">NIK: {log.nomor_pegawai || "—"}</p>
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-8 py-6">
-                          <p className="text-base font-bold text-white/70 group-hover:text-white transition-colors leading-normal break-words">{log.part_name}</p>
-                          <p className="text-[10px] text-white/30 mt-0.5 font-mono">{log.part_number || "No Part Number"}</p>
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <div className={`inline-flex items-center justify-end font-black text-sm ${
-                            log.jumlah < 0 ? "text-red-400" : "text-green-400"
-                          }`}>
-                            {log.jumlah > 0 ? (
-                              <span className="mr-1 opacity-50">▲</span>
-                            ) : (
-                              <span className="mr-1 opacity-50">▼</span>
-                            )}
-                            {Math.abs(log.jumlah)}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {historyList.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="px-8 py-20 text-center">
-                          <div className="text-4xl mb-4 opacity-20">📜</div>
-                          <p className="text-white/30 font-bold">Belum ada riwayat aktivitas.</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: REQUEST BARANG - REDESIGNED NOTION MINIMALIST */}
-        {activeTab === "requests" && (
-          <div className="bg-[#1e1e1e] text-white rounded-[4px] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] overflow-hidden animate-in fade-in duration-500">
-            {/* Header with Grid */}
-            <div className="p-8 grid grid-cols-12 gap-x-16 gap-y-6 items-start lg:items-center">
-              <div className="col-span-12">
-                <h2 className="text-base font-black tracking-tight leading-normal">Antrean Request</h2>
-                <p className="text-sm text-white/50 font-medium leading-normal">Kelola pengajuan stok barang dari karyawan.</p>
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              {isLoadingData ? (
-                <div className="py-20 text-center">
-                  <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full mx-auto mb-4"></div>
-                  <p className="text-white/40 font-medium">Memuat data request...</p>
+                            </td>
+                          </tr>
+                        ))}
+                        {historyList.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-8 py-20 text-center">
+                              <div className="text-4xl mb-4 opacity-20">📜</div>
+                              <p className="text-white/30 font-bold">Belum ada riwayat aktivitas.</p>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
-              ) : (
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="shadow-[0_1px_0_0_rgba(255,255,255,0.06)] text-white/30 text-[10px] font-black uppercase tracking-widest">
-                      <th className="px-8 py-4">Tanggal</th>
-                      <th className="px-8 py-4">Info Request</th>
-                      <th className="px-8 py-4">Keterangan</th>
-                      <th className="px-8 py-4 text-center">Status</th>
-                      <th className="px-8 py-4 text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {requestList.map((req) => (
-                      <tr key={req.id} className="group transition-colors hover:bg-white/[0.02] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
-                        <td className="px-8 py-6">
-                          <p className="text-base font-bold text-white/90 group-hover:text-white transition-colors leading-normal">
-                            {new Date(req.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </p>
-                          <p className="text-[10px] text-white/30 font-medium uppercase mt-0.5">
-                            {new Date(req.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </td>
-                        <td className="px-8 py-6">
-                          <p className="text-base font-extrabold text-white/90 group-hover:text-white transition-colors leading-normal break-words">{req.nama_barang}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="bg-white/5 text-white/60 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] py-0.5 px-2 rounded-[4px] text-[10px] font-black">{req.jumlah} unit</span>
-                            <span className="text-xs text-white/30 font-medium italic">oleh {req.nama_peminjam}</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-6">
-                          <p className="text-sm text-white/50 italic max-w-xs leading-normal whitespace-pre-wrap break-words">{req.keterangan || "-"}</p>
-                        </td>
-                        <td className="px-8 py-6 text-center">
-                          {req.status === "PENDING" ? (
-                            <span className="inline-block px-3 py-1 bg-amber-500/10 shadow-[0_0_0_1px_rgba(245,158,11,0.2)] text-amber-400 rounded-[4px] text-[10px] font-black uppercase tracking-wider animate-pulse">
-                              ⏳ PENDING
-                            </span>
-                          ) : (
-                            <span className="inline-block px-3 py-1 bg-green-500/10 shadow-[0_0_0_1px_rgba(34,197,94,0.2)] text-green-400 rounded-[4px] text-[10px] font-black uppercase tracking-wider">
-                              ✅ SELESAI
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-8 py-6">
-                          <div className="flex justify-end items-center gap-3">
-                            {req.status === "PENDING" && (
-                              <button 
-                                onClick={() => handleSelesaikanRequest(req.id, req.nama_barang)} 
-                                className="px-3 py-1.5 bg-white/5 hover:bg-green-500/20 text-white/40 hover:text-green-400 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] rounded-[4px] transition-all text-xs font-bold"
-                                title="Tandai Selesai"
-                              >
-                                ✓ Selesaikan
-                              </button>
-                            )}
-                            <button 
-                              onClick={() => handleHapusRequest(req.id)} 
-                              className="p-2 text-white/20 hover:text-red-400 hover:bg-white/10 rounded-[4px] transition-all" 
-                              title="Hapus Log"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {requestList.length === 0 && (
-                      <tr>
-                          <td colSpan={5} className="px-8 py-20 text-center">
-                          <div className="text-4xl mb-4 opacity-20">📥</div>
-                          <p className="text-white/30 font-bold">Yeay! Tidak ada antrean request.</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        )}
+              </div>
+            )}
+
+            {/* TAB 4: REQUEST BARANG - REDESIGNED NOTION MINIMALIST */}
+            {activeTab === "requests" && (
+              <div className="bg-[#1e1e1e] text-white rounded-[4px] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] overflow-hidden animate-in fade-in duration-500">
+                {/* Header with Grid */}
+                <div className="p-8 grid grid-cols-12 gap-x-16 gap-y-6 items-start lg:items-center">
+                  <div className="col-span-12">
+                    <h2 className="text-base font-black tracking-tight leading-normal">Antrean Request</h2>
+                    <p className="text-sm text-white/50 font-medium leading-normal">Kelola pengajuan stok barang dari karyawan.</p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  {isLoadingData ? (
+                    <div className="py-20 text-center">
+                      <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full mx-auto mb-4"></div>
+                      <p className="text-white/40 font-medium">Memuat data request...</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="shadow-[0_1px_0_0_rgba(255,255,255,0.06)] text-white/30 text-[10px] font-black uppercase tracking-widest">
+                          <th className="px-8 py-4">Tanggal</th>
+                          <th className="px-8 py-4">Info Request</th>
+                          <th className="px-8 py-4">Keterangan</th>
+                          <th className="px-8 py-4 text-center">Status</th>
+                          <th className="px-8 py-4 text-right">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {requestList.map((req) => (
+                          <tr key={req.id} className="group transition-colors hover:bg-white/[0.02] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+                            <td className="px-8 py-6">
+                              <p className="text-base font-bold text-white/90 group-hover:text-white transition-colors leading-normal">
+                                {new Date(req.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </p>
+                              <p className="text-[10px] text-white/30 font-medium uppercase mt-0.5">
+                                {new Date(req.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </td>
+                            <td className="px-8 py-6">
+                              <p className="text-base font-extrabold text-white/90 group-hover:text-white transition-colors leading-normal break-words">{req.nama_barang}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="bg-white/5 text-white/60 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] py-0.5 px-2 rounded-[4px] text-[10px] font-black">{req.jumlah} unit</span>
+                                <span className="text-xs text-white/30 font-medium italic">oleh {req.nama_peminjam}</span>
+                              </div>
+                            </td>
+                            <td className="px-8 py-6">
+                              <p className="text-sm text-white/50 italic max-w-xs leading-normal whitespace-pre-wrap break-words">{req.keterangan || "-"}</p>
+                            </td>
+                            <td className="px-8 py-6 text-center">
+                              {req.status === "PENDING" ? (
+                                <span className="inline-block px-3 py-1 bg-amber-500/10 shadow-[0_0_0_1px_rgba(245,158,11,0.2)] text-amber-400 rounded-[4px] text-[10px] font-black uppercase tracking-wider animate-pulse">
+                                  ⏳ PENDING
+                                </span>
+                              ) : (
+                                <span className="inline-block px-3 py-1 bg-green-500/10 shadow-[0_0_0_1px_rgba(34,197,94,0.2)] text-green-400 rounded-[4px] text-[10px] font-black uppercase tracking-wider">
+                                  ✅ SELESAI
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-8 py-6">
+                              <div className="flex justify-end items-center gap-3">
+                                {req.status === "PENDING" && (
+                                  <button
+                                    onClick={() => handleSelesaikanRequest(req.id, req.nama_barang)}
+                                    className="px-3 py-1.5 bg-white/5 hover:bg-green-500/20 text-white/40 hover:text-green-400 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] rounded-[4px] transition-all text-xs font-bold"
+                                    title="Tandai Selesai"
+                                  >
+                                    ✓ Selesaikan
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleHapusRequest(req.id)}
+                                  className="p-2 text-white/20 hover:text-red-400 hover:bg-white/10 rounded-[4px] transition-all"
+                                  title="Hapus Log"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {requestList.length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="px-8 py-20 text-center">
+                              <div className="text-4xl mb-4 opacity-20">📥</div>
+                              <p className="text-white/30 font-bold">Yeay! Tidak ada antrean request.</p>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            )}
 
           </div>
         </main>
@@ -1069,49 +1075,49 @@ export default function AdminDashboard() {
                 <h2 className="font-black text-xl tracking-tight">{editId ? "Update Barang" : "Add New Item"}</h2>
                 <p className="text-xs text-slate-400 font-medium mt-0.5">{editId ? "Lakukan perubahan pada data master." : "Complete the form to add a new item."}</p>
               </div>
-              <button 
-                onClick={() => setShowAddModal(false)} 
+              <button
+                onClick={() => setShowAddModal(false)}
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors text-2xl"
               >
                 ×
               </button>
             </div>
-            
+
             <div className="p-8 overflow-y-auto">
               <form onSubmit={handleSimpanBarang} className="space-y-6">
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Item Name *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={formData.part_name} 
-                    onChange={(e) => setFormData({...formData, part_name: e.target.value})} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
-                    placeholder="Example: Krytox Grease" 
+                  <input
+                    type="text"
+                    required
+                    value={formData.part_name}
+                    onChange={(e) => setFormData({ ...formData, part_name: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    placeholder="Example: Krytox Grease"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Part Number</label>
-                    <input 
-                      type="text" 
-                      value={formData.part_number} 
-                      onChange={(e) => setFormData({...formData, part_number: e.target.value})} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
-                      placeholder="Optional" 
+                    <input
+                      type="text"
+                      value={formData.part_number}
+                      onChange={(e) => setFormData({ ...formData, part_number: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                      placeholder="Optional"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{editId ? "Current Stock *" : "Initial Stock *"}</label>
-                    <input 
-                      type="number" 
-                      required 
-                      min="0" 
-                      value={formData.quantity} 
-                      onChange={(e) => setFormData({...formData, quantity: e.target.value})} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
-                      placeholder="0" 
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                      placeholder="0"
                     />
                   </div>
                 </div>
@@ -1119,50 +1125,50 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Batch Number</label>
-                    <input 
-                      type="text" 
-                      value={formData.batch_number} 
-                      onChange={(e) => setFormData({...formData, batch_number: e.target.value})} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
-                      placeholder="Example: BN-2024"   
+                    <input
+                      type="text"
+                      value={formData.batch_number}
+                      onChange={(e) => setFormData({ ...formData, batch_number: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                      placeholder="Example: BN-2024"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Expired Date</label>
-                    <input 
-                      type="date" 
-                      value={formData.expired_date} 
-                      onChange={(e) => setFormData({...formData, expired_date: e.target.value})} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+                    <input
+                      type="date"
+                      value={formData.expired_date}
+                      onChange={(e) => setFormData({ ...formData, expired_date: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Location / Drawer</label>
-                  <input 
-                    type="text" 
-                    value={formData.location} 
-                    onChange={(e) => setFormData({...formData, location: e.target.value})} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
-                    placeholder="Example: DRAWER A" 
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    placeholder="Example: DRAWER A"
                   />
                 </div>
 
                 <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
                   <label className="block text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">Barcode ID / UUID *</label>
                   <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      required 
-                      value={formData.barcode_id} 
-                      onChange={(e) => setFormData({...formData, barcode_id: e.target.value})} 
-                      className="flex-1 bg-white border border-blue-200 rounded-xl p-3 text-xs font-mono font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none" 
-                      placeholder="Unique ID..." 
+                    <input
+                      type="text"
+                      required
+                      value={formData.barcode_id}
+                      onChange={(e) => setFormData({ ...formData, barcode_id: e.target.value })}
+                      className="flex-1 bg-white border border-blue-200 rounded-xl p-3 text-xs font-mono font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="Unique ID..."
                     />
-                    <button 
-                      type="button" 
-                      onClick={handleGenerateUUID} 
+                    <button
+                      type="button"
+                      onClick={handleGenerateUUID}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md shadow-blue-200 shrink-0 active:scale-95"
                     >
                       Gen
@@ -1171,16 +1177,16 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex gap-4 pt-4">
-                  <button 
-                    type="button" 
-                    onClick={() => setShowAddModal(false)} 
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
                     className="flex-1 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-bold py-4 rounded-2xl transition-all"
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="submit" 
-                    disabled={isSavingItem} 
+                  <button
+                    type="submit"
+                    disabled={isSavingItem}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 disabled:opacity-50 transition-all active:scale-95"
                   >
                     {isSavingItem ? "Saving..." : (editId ? "UPDATE" : "SAVE")}
