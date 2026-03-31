@@ -236,7 +236,7 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-4 pt-8 mt-8 border-t border-slate-100">
                 <div className="flex flex-col">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Where's the item?</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Item location?</p>
                   <button onClick={openSearchModal} className="w-full flex-1 bg-white hover:bg-blue-50 text-blue-600 font-bold py-4 px-2 rounded-2xl border-2 border-blue-100 transition-all active:scale-95 text-xs flex justify-center items-center gap-2">
                     <span className="text-lg leading-none">🔍</span> Check Location
                   </button>

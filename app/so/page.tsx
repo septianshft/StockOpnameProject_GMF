@@ -69,14 +69,25 @@ export default function AdminDashboard() {
   });
 
   // --- FUNGSI LOGIN ---
+  useEffect(() => {
+    const isLogin = sessionStorage.getItem("gmf_admin_auth");
+    if (isLogin === "true") setIsAuthenticated(true);
+  }, []);
+
   const handleLoginAdmin = (e: React.FormEvent) => {
     e.preventDefault();
     if (pinInput === PIN_RAHASIA) {
       setIsAuthenticated(true);
+      sessionStorage.setItem("gmf_admin_auth", "true"); // Simpan ke brankas browser
     } else {
       alert("❌ PIN Salah!");
       setPinInput("");
     }
+  };
+
+  const handleLogoutAdmin = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem("gmf_admin_auth"); // Hapus kunci dari brankas
   };
 
   // --- FUNGSI AMBIL DATA TABEL ---
@@ -539,12 +550,12 @@ export default function AdminDashboard() {
           <NavItem id="requests" icon={<img src="https://img.icons8.com/?size=100&id=124442&format=png&color=FFFFFF" className="w-6 h-6" alt="requests" />} label="Request Queue" />
         </nav>
 
-        <div className="p-6 shadow-[0_-1px_0_0_rgba(255,255,255,0.06)]">
+        <div className="p-6 border-t border-slate-100">
           <button
-            onClick={() => setIsAuthenticated(false)}
-            className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-red-500/10 text-white/30 hover:text-red-400 font-bold py-3 rounded-[4px] transition-all text-xs uppercase tracking-widest shadow-[0_0_0_1px_rgba(255,255,255,0.06)] hover:shadow-[0_0_0_1px_rgba(239,68,68,0.2)]"
+            onClick={handleLogoutAdmin}
+            className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 font-bold py-3 rounded-xl transition-colors text-sm"
           >
-            Logout System
+            Keluar Sistem
           </button>
         </div>
       </aside>
