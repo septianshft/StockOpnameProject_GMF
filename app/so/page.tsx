@@ -316,7 +316,7 @@ export default function AdminDashboard() {
 
       let itemsHtml = "";
       // PERBAIKAN: Ubah isi QR jadi URL lengkap
-      const baseUrl = "https://stock-opname-project-feqi4nikw-septianshfts-projects.vercel.app"; 
+      const baseUrl = "https://stock-opname-project-feqi4nikw-septianshfts-projects.vercel.app/"; 
       const qrData = `${baseUrl}/?scan=${item.barcode_id}`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
 
@@ -397,7 +397,7 @@ export default function AdminDashboard() {
       // PERBAIKAN LOGIKA LOOPING BERDASARKAN QTY BARANG
       let itemsHtml = "";
       let totalStikerDicetak = 0;
-      const baseUrl = "https://stock-opname-project-feqi4nikw-septianshfts-projects.vercel.app"; 
+      const baseUrl = "https://stock-opname-project-feqi4nikw-septianshfts-projects.vercel.app/"; 
 
       inventoryList.forEach(item => {
         const qty = Number(item.quantity) || 0;
