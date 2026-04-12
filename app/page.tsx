@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import QRScanner from "@/components/QRScanner";
 import { supabase } from "@/lib/supabase";
 
@@ -64,11 +64,17 @@ export default function Home() {
     setIsLoading(true);
     setErrorMsg(null);
 
+    // === PERBAIKAN: KUPAS URL JIKA HASIL SCAN BERUPA LINK ===
+    let finalBarcodeId = decodedText;
+    if (decodedText.includes("?scan=")) {
+      finalBarcodeId = decodedText.split("?scan=")[1];
+    }
+
     try {
       const { data, error } = await supabase
         .from("inventory")
         .select("*")
-        .eq("barcode_id", decodedText)
+        .eq("barcode_id", finalBarcodeId)
         .maybeSingle();
 
       if (error) throw error;
@@ -111,6 +117,22 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  // === FITUR BARU: TANGKAP SCAN DARI KAMERA HP BAWAAN ===
+  useEffect(() => {
+    // 1. Cek apakah di URL ada tulisan "?scan=..."
+    const params = new URLSearchParams(window.location.search);
+    const scannedBarcodeId = params.get("scan");
+
+    if (scannedBarcodeId) {
+      // 2. Kalau ada, langsung panggil fungsi masuk keranjang secara otomatis!
+      handleScanSuccess(scannedBarcodeId);
+
+      // 3. Bersihkan URL (Hapus ?scan=...) supaya kalau user nge-refresh web, 
+      // barangnya nggak masuk keranjang dua kali secara otomatis.
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []); // Cukup dijalankan 1 kali saat web pertama dibuka
 
   const updateQuantity = (id: number, delta: number) => {
     setCart(prevCart => prevCart.map(item => {

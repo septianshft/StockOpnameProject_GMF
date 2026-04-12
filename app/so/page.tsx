@@ -169,8 +169,14 @@ export default function AdminDashboard() {
     setItemData(null);
     setStokFisik("");
 
+    // === PERBAIKAN: KUPAS URL JIKA HASIL SCAN BERUPA LINK ===
+    let finalBarcodeId = decodedText;
+    if (decodedText.includes("?scan=")) {
+      finalBarcodeId = decodedText.split("?scan=")[1];
+    }
+
     try {
-      const { data, error } = await supabase.from("inventory").select("*").eq("barcode_id", decodedText).maybeSingle();
+      const { data, error } = await supabase.from("inventory").select("*").eq("barcode_id", finalBarcodeId).maybeSingle();
       if (error) setErrorMsg("Terjadi kesalahan saat membaca database.");
       else if (!data) setErrorMsg("Barang tidak ditemukan di database.");
       else setItemData(data);
@@ -309,9 +315,13 @@ export default function AdminDashboard() {
     if (printWindow) {
 
       let itemsHtml = "";
+      // PERBAIKAN: Ubah isi QR jadi URL lengkap
+      const baseUrl = window.location.origin; // Otomatis ngebaca localhost / link vercel kamu
+      const qrData = `${baseUrl}/?scan=${item.barcode_id}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+
       // Ambil quantity, minimal 1 (jaga-jaga kalau stok 0 tapi admin butuh cetak 1 stiker buat nempel di rak kosong)
       const qty = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.barcode_id)}`;
 
       // Looping pembuatan kotak stiker sebanyak jumlah stok
       for (let i = 0; i < qty; i++) {
@@ -387,9 +397,11 @@ export default function AdminDashboard() {
       // PERBAIKAN LOGIKA LOOPING BERDASARKAN QTY BARANG
       let itemsHtml = "";
       let totalStikerDicetak = 0;
+      const baseUrl = window.location.origin;
 
       inventoryList.forEach(item => {
         const qty = Number(item.quantity) || 0;
+        const qrData = `${baseUrl}/?scan=${item.barcode_id}`; // Gabungkan URL
         // Ulangi pembuatan HTML box sebanyak jumlah stok barang tersebut
         for (let i = 0; i < qty; i++) {
           totalStikerDicetak++;
@@ -397,7 +409,7 @@ export default function AdminDashboard() {
             <div class="label-box">
               <h2>${item.part_name}</h2>
               <p>PN: ${item.part_number || "-"}</p>
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.barcode_id)}" alt="QR Code" />
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}" alt="QR Code" />
 
               <p>Batch: ${item.batch_number || "-"}</p>
               <p>Exp: ${item.expired_date || "-"}</p>
