@@ -244,7 +244,7 @@ export default function Home() {
           {!isScanning && !isLoading && cart.length === 0 && !errorMsg && (
             <div className="bg-white p-12 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-200 text-center group animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform duration-300">
-                <img src="https://img.icons8.com/?size=100&id=u6A1fcsd1q2J&format=png&color=000000" alt="Camera" className="w-16 h-16" />
+                <img src="/icons/icons8-cameraColored-100.png" alt="Camera" className="w-16 h-16" />
               </div>
               <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-3">Scan Item</h2>
               <p className="text-slate-500 text-sm leading-relaxed mb-10">Scan QR code item to add it to your cart.</p>

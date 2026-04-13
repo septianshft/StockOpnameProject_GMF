@@ -555,11 +555,11 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
-          <NavItem id="dashboard" icon={<img src="https://img.icons8.com/?size=100&id=8322&format=png&color=FFFFFF" className="w-6 h-6" alt="dashboard" />} label="Overview" />
-          <NavItem id="scanner" icon={<img src="https://img.icons8.com/?size=100&id=41efp61F6UJi&format=png&color=FFFFFF" className="w-6 h-6" alt="audit" />} label="Audit (SO)" />
-          <NavItem id="inventory" icon={<img src="https://img.icons8.com/?size=100&id=DlNS9fNLzyOd&format=png&color=FFFFFF" className="w-6 h-6" alt="inventory" />} label="Master Stock" />
-          <NavItem id="history" icon={<img src="https://img.icons8.com/?size=100&id=58760&format=png&color=FFFFFF" className="w-6 h-6" alt="history" />} label="Log History" />
-          <NavItem id="requests" icon={<img src="https://img.icons8.com/?size=100&id=124442&format=png&color=FFFFFF" className="w-6 h-6" alt="requests" />} label="Request Queue" />
+          <NavItem id="dashboard" icon={<img src="/icons/icons8-chart-100.png" className="w-6 h-6" alt="dashboard" />} label="Overview" />
+          <NavItem id="scanner" icon={<img src="/icons/icons8-camera-100.png" className="w-6 h-6" alt="audit" />} label="Audit (SO)" />
+          <NavItem id="inventory" icon={<img src="/icons/icons8-box-128.png" className="w-6 h-6" alt="inventory" />} label="Master Stock" />
+          <NavItem id="history" icon={<img src="/icons/icons8-activity-history-100.png" className="w-6 h-6" alt="history" />} label="Log History" />
+          <NavItem id="requests" icon={<img src="/icons/icons8-inbox-100.png" className="w-6 h-6" alt="requests" />} label="Request Queue" />
         </nav>
 
         <div className="p-6 border-t border-slate-100">
