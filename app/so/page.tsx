@@ -318,7 +318,7 @@ export default function AdminDashboard() {
       // PERBAIKAN: Ubah isi QR jadi URL lengkap
       const baseUrl = "https://stock-opname-project-feqi4nikw-septianshfts-projects.vercel.app/"; 
       const qrData = `${baseUrl}/?scan=${item.barcode_id}`;
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`;
 
       // Ambil quantity, minimal 1 (jaga-jaga kalau stok 0 tapi admin butuh cetak 1 stiker buat nempel di rak kosong)
       const qty = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
@@ -409,7 +409,7 @@ export default function AdminDashboard() {
             <div class="label-box">
               <h2>${item.part_name}</h2>
               <p>PN: ${item.part_number || "-"}</p>
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}" alt="QR Code" />
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}" alt="QR Code" />
 
               <p>Batch: ${item.batch_number || "-"}</p>
               <p>Exp: ${item.expired_date || "-"}</p>
