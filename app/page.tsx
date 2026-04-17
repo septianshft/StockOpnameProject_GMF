@@ -59,16 +59,40 @@ export default function Home() {
     (item.part_number && item.part_number.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  // === 2. TIMPA FUNGSI INI (FITUR SCANNER WEB) ===
   const handleScanSuccess = async (decodedText: string) => {
     setIsScanning(false);
     setIsLoading(true);
     setErrorMsg(null);
 
-    // === PERBAIKAN: KUPAS URL JIKA HASIL SCAN BERUPA LINK ===
+    // LOGIKA PENGUPAS URL SUPER CERDAS
     let finalBarcodeId = decodedText;
-    if (decodedText.includes("?scan=")) {
-      finalBarcodeId = decodedText.split("?scan=")[1];
+    
+    try {
+      // Coba kupas pakai standar URL browser
+      if (decodedText.startsWith("http")) {
+        const urlObj = new URL(decodedText);
+        finalBarcodeId = urlObj.searchParams.get("scan") || decodedText;
+      } else if (decodedText.includes("?scan=")) {
+        finalBarcodeId = decodedText.split("?scan=")[1];
+      }
+    } catch (e) {
+      // Kalau error pas ngupas, potong paksa
+      if (decodedText.includes("?scan=")) {
+        finalBarcodeId = decodedText.split("?scan=")[1];
+      }
     }
+
+    // === GANTI BAGIAN PEMBERSIHAN AKHIR JADI SEPERTI INI: ===
+    
+    // 1. Decode dulu jaga-jaga kalau ada karakter URL aneh kayak %20
+    finalBarcodeId = decodeURIComponent(finalBarcodeId);
+    
+    // 2. PEMBERSIH BRUTAL: Buang SEMUA karakter kecuali Huruf, Angka, dan Strip (-)
+    // Karena UUID buatan crypto.randomUUID() cuma berisi karakter itu aja.
+    finalBarcodeId = finalBarcodeId.replace(/[^a-zA-Z0-9-]/g, "");
+
+    console.log("ID Bersih yang dikirim ke Supabase:", finalBarcodeId); // Buat ngecek di Inspect Element
 
     try {
       const { data, error } = await supabase
@@ -79,7 +103,8 @@ export default function Home() {
 
       if (error) throw error;
       if (!data) {
-        setErrorMsg("Item not found in database.");
+        // TRIK DEWA: Kita munculin ID yang dibaca kamera ke layar biar ketahuan salahnya di mana!
+        setErrorMsg(`Item tidak ditemukan. (ID Terbaca: "${finalBarcodeId}")`);
         return;
       }
 
@@ -89,9 +114,7 @@ export default function Home() {
         if (existingItem) {
           if (existingItem.quantity_to_take < existingItem.max_quantity) {
             return prevCart.map((item) =>
-              item.id === data.id
-                ? { ...item, quantity_to_take: item.quantity_to_take + 1 }
-                : item
+              item.id === data.id ? { ...item, quantity_to_take: item.quantity_to_take + 1 } : item
             );
           } else {
             alert(`⚠️ Stok maksimal ${data.part_name} di sistem hanya ${existingItem.max_quantity} unit!`);
@@ -118,21 +141,34 @@ export default function Home() {
     }
   };
 
-  // === FITUR BARU: TANGKAP SCAN DARI KAMERA HP BAWAAN ===
+  // === 1. TIMPA USEFFECT INI (FITUR KAMERA HP BAWAAN) ===
   useEffect(() => {
-    // 1. Cek apakah di URL ada tulisan "?scan=..."
-    const params = new URLSearchParams(window.location.search);
-    const scannedBarcodeId = params.get("scan");
+    // Kita kasih jeda 300ms biar Next.js dan Supabase siap napas dulu
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const scannedBarcodeId = params.get("scan");
 
-    if (scannedBarcodeId) {
-      // 2. Kalau ada, langsung panggil fungsi masuk keranjang secara otomatis!
-      handleScanSuccess(scannedBarcodeId);
+      if (scannedBarcodeId) {
+        // Bersihkan ID pakai logika yang sama dengan scanner web
+        let cleanId = scannedBarcodeId;
+        
+        // 1. Decode dulu jaga-jaga kalau ada karakter URL aneh kayak %20
+        cleanId = decodeURIComponent(cleanId);
+        
+        // 2. PEMBERSIH BRUTAL: Buang SEMUA karakter kecuali Huruf, Angka, dan Strip (-)
+        cleanId = cleanId.replace(/[^a-zA-Z0-9-]/g, "");
 
-      // 3. Bersihkan URL (Hapus ?scan=...) supaya kalau user nge-refresh web, 
-      // barangnya nggak masuk keranjang dua kali secara otomatis.
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []); // Cukup dijalankan 1 kali saat web pertama dibuka
+        console.log("ID Bersih dari URL Param:", cleanId);
+        
+        handleScanSuccess(cleanId);
+        
+        // Hapus tulisan ?scan= dari URL bar biar gak dobel pas di-refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const updateQuantity = (id: number, delta: number) => {
     setCart(prevCart => prevCart.map(item => {
