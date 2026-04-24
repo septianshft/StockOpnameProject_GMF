@@ -467,6 +467,93 @@ export default function AdminDashboard() {
     }
   };
 
+  // === FITUR BARU: CETAK LISTING KERTAS PER LOKASI ===
+  const handleCetakListLokasi = () => {
+    if (inventoryList.length === 0) return alert("Belum ada data barang!");
+
+    const groupedData: Record<string, any[]> = {};
+    inventoryList.forEach(item => {
+      const loc = item.location ? item.location.trim().toUpperCase() : "TANPA LOKASI";
+      if (!groupedData[loc]) groupedData[loc] = [];
+      groupedData[loc].push(item);
+    });
+
+    const sortedLocations = Object.keys(groupedData).sort();
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      const today = new Date();
+      let htmlContent = `
+        <html>
+        <head>
+          <title>List Barang & Expired per Lokasi</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #1e293b; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+            .header p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; font-weight: bold; }
+            .location-section { margin-bottom: 30px; page-break-inside: avoid; }
+            .location-title { background-color: #f1f5f9; padding: 12px; font-size: 16px; font-weight: 900; border: 1px solid #000; border-bottom: none; margin: 0; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+            th, td { border: 1px solid #000; padding: 10px 15px; text-align: left; }
+            th { background-color: #f8fafc; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+            td { font-size: 13px; }
+            .expired-danger { color: #dc2626; font-weight: 900; text-decoration: underline; }
+            .no-print { margin-bottom: 20px; display: flex; justify-content: flex-end; }
+            button { padding: 12px 24px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+            @media print { .no-print { display: none !important; } }
+          </style>
+        </head>
+        <body>
+          <div class="no-print"><button onclick="window.print()">🖨️ Cetak Dokumen</button></div>
+          <div class="header">
+            <h1>LABEL CHEMICAL & EXPIRED DATE</h1>
+            <p>GMF INVENTORY SYSTEM - ${new Date().toLocaleDateString('id-ID')}</p>
+          </div>
+      `;
+
+      sortedLocations.forEach(loc => {
+        htmlContent += `
+          <div class="location-section">
+            <h2 class="location-title">📍 LOKASI: ${loc}</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 40%">NAMA BARANG</th>
+                  <th style="width: 30%">PART NUMBER</th>
+                  <th style="width: 30%">EXPIRED DATE</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        const sortedItems = groupedData[loc].sort((a, b) => a.part_name.localeCompare(b.part_name));
+
+        sortedItems.forEach(item => {
+          const expDate = item.expired_date ? new Date(item.expired_date) : null;
+          const isExpired = expDate && expDate < today;
+          const formattedDate = expDate 
+            ? expDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) 
+            : "-";
+
+          htmlContent += `
+            <tr>
+              <td><strong>${item.part_name}</strong></td>
+              <td>${item.part_number || "-"}</td>
+              <td class="${isExpired ? 'expired-danger' : ''}">${formattedDate} ${isExpired ? '(EXPIRED!)' : ''}</td>
+            </tr>
+          `;
+        });
+
+        htmlContent += `</tbody></table></div>`;
+      });
+
+      htmlContent += `</body></html>`;
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+    }
+  };
+
   // Filter list inventory berdasarkan pencarian (Nama atau PN)
   const filteredInventory = inventoryList.filter(item =>
     item.part_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -786,15 +873,39 @@ export default function AdminDashboard() {
             {/* TAB 2: MASTER STOK - REDESIGNED NOTION MINIMALIST */}
             {activeTab === "inventory" && (
               <div className="bg-[#1e1e1e] text-white rounded-[4px] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] overflow-hidden animate-in fade-in duration-500">
-                {/* 12-Column Grid Layout with 64px Gutters and 24px Vertical Rhythm */}
-                <div className="p-8 grid grid-cols-12 gap-x-16 gap-y-6 items-start lg:items-center">
-                  <div className="col-span-12 lg:col-span-5">
-                    <h2 className="text-base font-black tracking-tight leading-normal">Item List</h2>
-                    <p className="text-sm text-white/50 font-medium leading-normal">Manage master data and print QR Codes.</p>
+                {/* HEADER SECTION FROM REFERENCE2.TSX */}
+                <div className="p-6 md:p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/5">
+                  <div>
+                    <h2 className="text-2xl font-black text-white tracking-tight">Database Barang</h2>
+                    <p className="text-sm text-white/50 font-medium">Manajemen data master dan pencetakan QR.</p>
                   </div>
+                  <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                    <button 
+                      onClick={handleCetakListLokasi} 
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 border border-white/10 text-sm font-bold py-3 px-5 rounded-xl transition-all shadow-sm"
+                    >
+                      📋 Cetak Label Lokasi
+                    </button>
 
-                  {/* BAR PENCARIAN - Minimalist style */}
-                  <div className="col-span-12 lg:col-span-4 relative group">
+                    <button 
+                      onClick={handleCetakSemuaQR} 
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 border border-white/10 text-sm font-bold py-3 px-5 rounded-xl transition-all shadow-sm"
+                    >
+                      🖨️ Cetak Semua QR
+                    </button>
+                    
+                    <button 
+                      onClick={openAddModal} 
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-3 px-5 rounded-xl transition-all shadow-lg shadow-blue-900/20"
+                    >
+                      + Tambah
+                    </button>
+                  </div>
+                </div>
+
+                {/* SEARCH BAR SECTION */}
+                <div className="p-6 border-b border-white/5">
+                  <div className="relative group max-w-md">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-blue-400 transition-colors">
                       🔍
                     </span>
@@ -805,22 +916,6 @@ export default function AdminDashboard() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-11 pr-4 py-2 bg-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] rounded-[4px] text-base font-medium text-white placeholder:text-white/20 focus:shadow-[0_0_0_1px_rgba(59,130,246,0.5)] outline-none transition-all"
                     />
-                  </div>
-
-                  {/* ACTION BUTTONS */}
-                  <div className="col-span-12 lg:col-span-3 flex gap-3 shrink-0">
-                    <button
-                      onClick={handleCetakSemuaQR}
-                      className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] text-sm font-bold py-2 px-4 rounded-[4px] transition-all hover:text-white"
-                    >
-                      <span>🖨️</span> Print All
-                    </button>
-                    <button
-                      onClick={openAddModal}
-                      className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded-[4px] shadow-lg transition-all active:scale-95"
-                    >
-                      <span>+</span> Add
-                    </button>
                   </div>
                 </div>
 
