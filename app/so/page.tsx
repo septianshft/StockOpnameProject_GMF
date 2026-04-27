@@ -519,9 +519,10 @@ export default function AdminDashboard() {
             <table>
               <thead>
                 <tr>
-                  <th style="width: 40%">NAMA BARANG</th>
-                  <th style="width: 30%">PART NUMBER</th>
-                  <th style="width: 30%">EXPIRED DATE</th>
+                  <th style="width: 35%">NAMA BARANG</th>
+                  <th style="width: 25%">PART NUMBER</th>
+                  <th style="width: 25%">EXPIRED DATE</th>
+                  <th style="width: 15%; text-align: center;">QTY</th>
                 </tr>
               </thead>
               <tbody>
@@ -541,6 +542,7 @@ export default function AdminDashboard() {
               <td><strong>${item.part_name}</strong></td>
               <td>${item.part_number || "-"}</td>
               <td class="${isExpired ? 'expired-danger' : ''}">${formattedDate} ${isExpired ? '(EXPIRED!)' : ''}</td>
+              <td style="text-align: center; font-size: 16px; font-weight: 900;">${item.quantity || 0}</td>
             </tr>
           `;
         });
